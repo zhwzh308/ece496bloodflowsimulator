@@ -12,15 +12,6 @@ enum {
     NUM_ATTRIBUTES
 };
 
-/*uniform index
-enum {
-    UNIFORM_MODELVIEWPROJECTION_MATRIX,
-    UNIFORM_NORMAL_MATRIX,
-    NUM_UNIFORMS
-};
-
-GLuint uniforms[NUM_UNIFORMS];*/
-
 @implementation RosyWriterPreviewView
 
 

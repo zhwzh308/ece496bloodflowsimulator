@@ -720,7 +720,7 @@ int detect_peak(
             }
             else {
             // Start simulation
-            [self createBitmapsfromPixelBuffer:CMSampleBufferGetImageBuffer(sampleBuffer)];
+                [self createBitmapsfromPixelBuffer:CMSampleBufferGetImageBuffer(sampleBuffer)];
             //frame_number = 0;
             }
         }
@@ -888,9 +888,10 @@ int detect_peak(
      * This way, we have no need to worry about selecting video area.
 	 */
     captureSession = [[AVCaptureSession alloc] init];
-    if ([captureSession canSetSessionPreset:AVCaptureSessionPresetiFrame960x540]) {
+    NSString *option = isUsingFrontCamera?AVCaptureSessionPreset640x480:AVCaptureSessionPresetiFrame960x540;
+    if ([captureSession canSetSessionPreset:option]) {
         // Most resource efficient.
-        captureSession.sessionPreset = AVCaptureSessionPresetiFrame960x540;
+        captureSession.sessionPreset = option;
     }
     /*
 	 * Create audio connection
@@ -963,13 +964,6 @@ int detect_peak(
                     initWithSession:captureSession];
 	[previewLayer setBackgroundColor:[[UIColor blackColor] CGColor]];
 	[previewLayer setVideoGravity:AVLayerVideoGravityResizeAspect];
-    /*
-     CALayer *rootLayer = [previewView layer];
-     [rootLayer setMasksToBounds:YES];
-     [previewLayer setFrame:[rootLayer bounds]];
-     [rootLayer addSublayer:previewLayer];
-     [session startRunning];
-     */
 	self.videoOrientation = [videoConnection videoOrientation]; // AVLayerVideoGravityResize
 	[videoOut release];
     
