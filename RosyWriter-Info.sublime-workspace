@@ -1,0 +1,238 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"lock",
+				"lock_create"
+			],
+			[
+				"obj",
+				"object"
+			],
+			[
+				"er",
+				"error_tmp"
+			],
+			[
+				"error",
+				"error_tmp"
+			],
+			[
+				"erro",
+				"errno"
+			],
+			[
+				"def",
+				"default"
+			],
+			[
+				"my",
+				"myVar"
+			],
+			[
+				"m",
+				"myArray"
+			]
+		]
+	},
+	"buffers":
+	[
+	],
+	"build_system": "",
+	"command_palette":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"console":
+	{
+		"height": 0.0,
+		"history":
+		[
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"file_history":
+	[
+		"/Users/mzhang/Desktop/avr",
+		"/Users/mzhang/Dropbox/2013Fall/ECE461/lecture/week10/IBM Texbook: 3.6, 3.7",
+		"/Users/mzhang/Dropbox/UofT/2013Winter/466/Labs/2/Report_2a/part2/Evaluation.m",
+		"/Users/mzhang/csc326/lab3/project/index.html",
+		"/Users/mzhang/csc326/lab3/project/header.html",
+		"/Users/mzhang/csc326/lab3/project/static/Search.css",
+		"/Users/mzhang/csc326/lab3/project/gplus.html",
+		"/Users/mzhang/csc326/lab3/header.html",
+		"/Users/mzhang/csc326/lab3/project/ajax_info.txt",
+		"/Users/mzhang/csc326/lab3/client_secret.json",
+		"/Users/mzhang/Desktop/crawler.py",
+		"/private/var/folders/wl/_8zd7h3x2g950d127vht9rqh0000gn/T/7be70269-5289-4601-be14-40a175f9b68e/nfs/ug/homes-1/z/zhangw31/ece344/os161/kern/asst1/stoplight.c",
+		"/private/var/folders/wl/_8zd7h3x2g950d127vht9rqh0000gn/T/f9fa2429-7813-4090-851e-3f685287c9bc/index.html",
+		"/private/var/folders/wl/_8zd7h3x2g950d127vht9rqh0000gn/T/f9fa2429-7813-4090-851e-3f685287c9bc/index_old.htm",
+		"/Users/mzhang/Downloads/crawler (1).py",
+		"/private/var/folders/wl/_8zd7h3x2g950d127vht9rqh0000gn/T/7be70269-5289-4601-be14-40a175f9b68e/nfs/ug/homes-1/z/zhangw31/csc326/bottle-0.11.6/dev/HelloWorld.py",
+		"/Users/mzhang/Dropbox/2013Fall/CSC326/dev/HelloWorld.py",
+		"/Users/mzhang/Dropbox/2013Fall/CSC326/dev/backend.py",
+		"/Users/mzhang/Dropbox/2013Fall/CSC326/dev/crawler.py",
+		"/Users/mzhang/Downloads/crawler.py",
+		"/Users/mzhang/Desktop/a.py",
+		"/Users/mzhang/Desktop/cpractise.c",
+		"/Users/mzhang/ece344/os161/include/Makefile",
+		"/private/var/folders/wl/_8zd7h3x2g950d127vht9rqh0000gn/T/7be70269-5289-4601-be14-40a175f9b68e/nfs/ug/homes-1/z/zhangw31/ece344/os161/kern/include/write.h",
+		"/private/var/folders/wl/_8zd7h3x2g950d127vht9rqh0000gn/T/7be70269-5289-4601-be14-40a175f9b68e/nfs/ug/homes-1/z/zhangw31/ece344/os161/kern/include/kern/errno.h",
+		"/private/var/folders/wl/_8zd7h3x2g950d127vht9rqh0000gn/T/7be70269-5289-4601-be14-40a175f9b68e/nfs/ug/homes-1/z/zhangw31/ece344/os161/kern/main/write.c",
+		"/private/var/folders/wl/_8zd7h3x2g950d127vht9rqh0000gn/T/7be70269-5289-4601-be14-40a175f9b68e/nfs/ug/homes-1/z/zhangw31/ece344/os161/kern/include/fs.h",
+		"/private/var/folders/wl/_8zd7h3x2g950d127vht9rqh0000gn/T/7be70269-5289-4601-be14-40a175f9b68e/nfs/ug/homes-1/z/zhangw31/ece344/os161/kern/include/emufs.h",
+		"/private/var/folders/wl/_8zd7h3x2g950d127vht9rqh0000gn/T/7be70269-5289-4601-be14-40a175f9b68e/nfs/ug/homes-1/z/zhangw31/ece344/os161/kern/include/elf.h",
+		"/private/var/folders/wl/_8zd7h3x2g950d127vht9rqh0000gn/T/7be70269-5289-4601-be14-40a175f9b68e/nfs/ug/homes-1/z/zhangw31/ece344/os161/kern/conf/conf.kern",
+		"/private/var/folders/wl/_8zd7h3x2g950d127vht9rqh0000gn/T/7be70269-5289-4601-be14-40a175f9b68e/nfs/ug/homes-1/z/zhangw31/ece344/os161/kern/main/hello.c",
+		"/private/var/folders/wl/_8zd7h3x2g950d127vht9rqh0000gn/T/7be70269-5289-4601-be14-40a175f9b68e/nfs/ug/homes-1/z/zhangw31/ece344/os161/kern/include/array.h",
+		"/private/var/folders/wl/_8zd7h3x2g950d127vht9rqh0000gn/T/7be70269-5289-4601-be14-40a175f9b68e/nfs/ug/homes-1/z/zhangw31/ece344/os161/kern/include/clock.h",
+		"/private/var/folders/wl/_8zd7h3x2g950d127vht9rqh0000gn/T/7be70269-5289-4601-be14-40a175f9b68e/nfs/ug/homes-1/z/zhangw31/ece344/os161/kern/include/addrspace.h",
+		"/private/var/folders/wl/_8zd7h3x2g950d127vht9rqh0000gn/T/7be70269-5289-4601-be14-40a175f9b68e/nfs/ug/homes-1/z/zhangw31/ece344/os161/kern/main/main.c",
+		"/Users/mzhang/Desktop/webDev/python/searchfront.py",
+		"/Users/mzhang/Downloads/INTERRUPT_LCD.s",
+		"/Users/mzhang/Desktop/searchfront.py",
+		"/Users/mzhang/Dropbox/2013Fall/CSC326/diveintopython-5.4/py/roman.py",
+		"/Users/mzhang/Desktop/index.html",
+		"/Users/mzhang/.bash_profile",
+		"/Users/mzhang/bash_temp",
+		"/Users/mzhang/Desktop/how to compile.cpp",
+		"/Users/mzhang/Desktop/array.cpp",
+		"/Users/mzhang/Downloads/APPLE.PURPLETOOLS.V2.5.0.BUILD.10B141-STEVIE/stevie.nfo",
+		"/Users/mzhang/Downloads/URLLink.acsm"
+	],
+	"find":
+	{
+		"height": 35.0
+	},
+	"find_in_files":
+	{
+		"height": 0.0,
+		"where_history":
+		[
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"(l3)",
+			"(l2)",
+			"(l1)",
+			"(l0)",
+			"def _enter",
+			"_enter"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+			"(locks[3])",
+			"(locks[2])",
+			"(locks[1])",
+			"(locks[0])"
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"sheets":
+			[
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 0.0
+	},
+	"input":
+	{
+		"height": 0.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"project": "RosyWriter-Info.sublime-project",
+	"replace":
+	{
+		"height": 64.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_symbol":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"settings":
+	{
+	},
+	"show_minimap": true,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 150.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}
