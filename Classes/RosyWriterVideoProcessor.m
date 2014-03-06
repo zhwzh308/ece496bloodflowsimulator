@@ -79,7 +79,10 @@
 {
 	CGFloat Cb = 128.0f - 0.14822656f * p[2] - 0.290992188f*p[1] + 0.4392148f*p[0];
 	CGFloat Cr = 128.0f + 0.4392148f * p[2] - (0.367789f * p[1]) - (0.07142578f* p[0]);
+    CGFloat Y = 16.0f + 0.256789f*p[2] + 0.5041289f * p[1]+0.09790625f * p[0];
+
 	tmp[row][col] = (Cb >= 77.0f && Cb <= 127.0f && Cr >= 133.0f && Cr <= 173.0f);
+    tmpY[row][col] = Y;
 }
 
 - (void)removeFile:(NSURL *)fileURL
@@ -348,8 +351,8 @@
         pixel += BYTES_PER_PIXEL;
     }
     // runtime frame averages.
-    arrayOfRedChannelAverage[frame_number] = ((double) sumOfRed) / bufferSize;
-    arrayOfGreenChannelAverage[frame_number] = ((double) sumOfGreen) / bufferSize;
+    arrayOfRedChannelAverage[frame_number - 70] = ((double) sumOfRed) / bufferSize;
+    arrayOfGreenChannelAverage[frame_number - 70] = ((double) sumOfGreen) / bufferSize;
 	CVPixelBufferUnlockBaseAddress( pixelBuffer, 0 );
 }
 
@@ -576,7 +579,38 @@ int detect_peak(
 					sum += tmp[row-2][col-3] + tmp[row-2][col-2] + tmp[row-2][col-1] + tmp[row-2][col];
 					sum += tmp[row-1][col-3] + tmp[row-1][col-2] + tmp[row-1][col-1] + tmp[row-1][col];
 					sum += tmp[row][col-3] + tmp[row][col-2] + tmp[row][col-1] + tmp[row][col];
-                if (sum < 16) {
+                    //calculate sume of Y
+                CGFloat sumY = tmpY[row-3][col-3] + tmpY[row-3][col-2] + tmpY[row-3][col-1] + tmpY[row-3][col];
+                    sumY += tmpY[row-2][col-3] + tmpY[row-2][col-2] + tmpY[row-2][col-1] + tmpY[row-2][col];
+                    sumY += tmpY[row-1][col-3] + tmpY[row-1][col-2] + tmpY[row-1][col-1] + tmpY[row-1][col];
+                    sumY += tmpY[row][col-3] + tmpY[row][col-2] + tmpY[row][col-1] + tmpY[row][col];
+                sumY = sumY * 0.0625f;
+                CGFloat devSumY = (tmpY[row-3][col-3] - sumY) * (tmpY[row-3][col-3] - sumY);
+                devSumY += (tmpY[row-3][col-2] - sumY) * (tmpY[row-3][col-2] - sumY);
+                devSumY += (tmpY[row-3][col-1] - sumY) * (tmpY[row-3][col-1] - sumY);
+                devSumY += (tmpY[row-3][col-0] - sumY) * (tmpY[row-3][col-0] - sumY);
+                
+                devSumY += (tmpY[row-2][col-3] - sumY) * (tmpY[row-2][col-3] - sumY);
+                devSumY += (tmpY[row-2][col-2] - sumY) * (tmpY[row-2][col-2] - sumY);
+                devSumY += (tmpY[row-2][col-1] - sumY) * (tmpY[row-2][col-1] - sumY);
+                devSumY += (tmpY[row-2][col-0] - sumY) * (tmpY[row-2][col-0] - sumY);
+                
+                devSumY += (tmpY[row-1][col-3] - sumY) * (tmpY[row-1][col-3] - sumY);
+                devSumY += (tmpY[row-1][col-2] - sumY) * (tmpY[row-1][col-2] - sumY);
+                devSumY += (tmpY[row-1][col-1] - sumY) * (tmpY[row-1][col-1] - sumY);
+                devSumY += (tmpY[row-1][col-0] - sumY) * (tmpY[row-1][col-0] - sumY);
+            
+                devSumY += (tmpY[row][col-3] - sumY) * (tmpY[row][col-3] - sumY);
+                devSumY += (tmpY[row][col-2] - sumY) * (tmpY[row][col-2] - sumY);
+                devSumY += (tmpY[row][col-1] - sumY) * (tmpY[row][col-1] - sumY);
+                devSumY += (tmpY[row][col-0] - sumY) * (tmpY[row][col-0] - sumY);
+//                if (sum < 16) {
+//                if (devSumY < 64.0f) {
+                if (sum < 16 || devSumY < 64.0f) {
+                        // The skin area should be:
+                        // a. Step 2: sum of the 4 by 4 block equal to 16;
+                        // b. standard deviation of the 4 by 4 block greater than 2.
+                    
 						// Optimized: this should still work because
 						// 3/4 = 0, 7/4 = 1, ..., 956/4 = 239 in int arithmatic.
                     lesstemp[row/4][col/4] = 0;
@@ -663,7 +697,7 @@ int detect_peak(
     pixel = pixelBase;
     for (int row = 0; row < bufferHeight; row++) {
         for (int col = 0; col < bufferWidth; col++) {
-				//if (tmp[row][col]) {
+ //           if (tmp[row][col]) {
             if (lesstemp[row/4][col/4]) {
                 CGFloat to_color = ((float) pixel[2]) + hr_sim;
                 if (to_color >= 255.0f) {
@@ -708,8 +742,10 @@ int detect_peak(
 			}
             // Collect average color channel values for HR estimation
             // Synchronously process the pixel buffer
-            [self fillInArray:CMSampleBufferGetImageBuffer(sampleBuffer)];
-			frame_number++;
+            if (frame_number > 70) {
+                [self fillInArray:CMSampleBufferGetImageBuffer(sampleBuffer)];
+            }
+            frame_number++;
 		}
         else {
             if (!isUsingFrontCamera) {
@@ -724,7 +760,7 @@ int detect_peak(
             //frame_number = 0;
             }
         }
-		
+		 
 		// Enqueue it for preview.  This is a shallow queue, so if image processing is taking too long,
 		// we'll drop this frame for preview (this keeps preview latency low).
 		OSStatus err = CMBufferQueueEnqueue(previewBufferQueue, sampleBuffer);

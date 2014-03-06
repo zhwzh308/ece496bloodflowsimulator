@@ -1,7 +1,7 @@
 #import <AVFoundation/AVFoundation.h>
 #import <Accelerate/Accelerate.h>
 #import <CoreMedia/CMBufferQueue.h>
-#define MAX_NUM_FRAMES 250
+#define MAX_NUM_FRAMES 330
 @protocol RosyWriterVideoProcessorDelegate;
 
 @interface RosyWriterVideoProcessor : NSObject <AVCaptureAudioDataOutputSampleBufferDelegate, AVCaptureVideoDataOutputSampleBufferDelegate> 
@@ -48,6 +48,7 @@
 	double arrayOfGreenChannelAverage[MAX_NUM_FRAMES];
     BOOL tmp[540][960];
     BOOL lesstemp[135][240];
+    CGFloat tmpY[540][960];
     /* CIImage
     CIContext *ciContext;*/
     
