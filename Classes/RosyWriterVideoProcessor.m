@@ -352,6 +352,7 @@
     }
     // runtime frame averages.
     double RedAvg = ((double) sumOfRed) / bufferSize;
+    NSLog(@"frame = %d, RedAvg = %f\n", frame_number, RedAvg);
 /*
     NSLog(@"frame = %d, RedAvg = %f\n", frame_number, RedAvg);
     if (RedAvg < 240 && frame_number < MAX_NUM_FRAMES)
@@ -359,6 +360,10 @@
     else
         arrayOfRedChannelAverage[frame_number - 70] = RedAvg;
 */
+    if (RedAvg < 200.0f && frame_number < 321) {
+        NSLog(@"failed./n");
+        frame_number = 71;
+    }
     arrayOfRedChannelAverage[frame_number - 70] = RedAvg;
 //    arrayOfGreenChannelAverage[frame_number - 70] = ((double) sumOfGreen) / bufferSize;
 	CVPixelBufferUnlockBaseAddress( pixelBuffer, 0 );
@@ -756,10 +761,17 @@ int detect_peak(
             frame_number++;
 		}
 /*
-        if ((frame_number == MAX_NUM_FRAMES) && (arrayOfRedChannelAverage[70]<240 || arrayOfRedChannelAverage[195]<240 || arrayOfRedChannelAverage[320]<240)) {
+        if ((frame_number == MAX_NUM_FRAMES) && (arrayOfRedChannelAverage[70]<240 || arrayOfRedChannelAverage[160]<240 || arrayOfRedChannelAverage[249]<240)) {
+            NSLog(@"in if./n");
             frame_number = 71;
         }
 */
+/*
+        if (frame_number == MAX_NUM_FRAMES) {
+            for (int a = 0; a < NUM_OF_RED_AVERAGE; a++)
+                
+        }
+ */
         else {
             if (!isUsingFrontCamera) {
 				[self heartRateEstimate];
