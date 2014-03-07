@@ -2,6 +2,7 @@
 #import <Accelerate/Accelerate.h>
 #import <CoreMedia/CMBufferQueue.h>
 #define MAX_NUM_FRAMES 330
+#define NUM_OF_RED_AVERAGE 250
 @protocol RosyWriterVideoProcessorDelegate;
 
 @interface RosyWriterVideoProcessor : NSObject <AVCaptureAudioDataOutputSampleBufferDelegate, AVCaptureVideoDataOutputSampleBufferDelegate> 
@@ -44,8 +45,8 @@
     int sizeOfDifferences;
     int sizeOfCollectedData;
     BOOL isUsingFrontCamera;
-	double arrayOfRedChannelAverage[MAX_NUM_FRAMES];
-	double arrayOfGreenChannelAverage[MAX_NUM_FRAMES];
+	double arrayOfRedChannelAverage[NUM_OF_RED_AVERAGE];
+//	double arrayOfGreenChannelAverage[MAX_NUM_FRAMES];
     BOOL tmp[540][960];
     BOOL lesstemp[135][240];
     CGFloat tmpY[540][960];
