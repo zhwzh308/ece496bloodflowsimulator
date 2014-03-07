@@ -362,9 +362,10 @@
 */
     if (RedAvg < 200.0f && frame_number < 321) {
         NSLog(@"failed./n");
-        frame_number = 71;
+        frame_number = 11;
     }
-    arrayOfRedChannelAverage[frame_number - 70] = RedAvg;
+    if (frame_number >= 70)
+        arrayOfRedChannelAverage[frame_number - 70] = RedAvg;
 //    arrayOfGreenChannelAverage[frame_number - 70] = ((double) sumOfGreen) / bufferSize;
 	CVPixelBufferUnlockBaseAddress( pixelBuffer, 0 );
 }
@@ -462,7 +463,7 @@
 					numSums = numSums + 1;
 				}
 			}
-			_heartRate = 60 * frame_number / (10 * sum/numSums);
+			_heartRate = 60 * frame_number / (10 * sum/numSums) * 0.75f;
 			NSLog(@"Heart rate measured is %f", _heartRate);
 		}
 	}
