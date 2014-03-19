@@ -352,7 +352,7 @@
     }
     // runtime frame averages.
     double RedAvg = ((double) sumOfRed) / bufferSize;
-    NSLog(@"frame = %d, RedAvg = %f\n", frame_number, RedAvg);
+    NSLog(@"frame = %d, RedAvg = %f\n", frame_number-70, RedAvg);
 /*
     NSLog(@"frame = %d, RedAvg = %f\n", frame_number, RedAvg);
     if (RedAvg < 240 && frame_number < MAX_NUM_FRAMES)

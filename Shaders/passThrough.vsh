@@ -1,3 +1,4 @@
+// Position as input variable for shader.
 attribute vec4 position;
 attribute mediump vec4 textureCoordinate;
 varying mediump vec2 coordinate;
