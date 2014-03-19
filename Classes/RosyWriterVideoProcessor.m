@@ -332,7 +332,7 @@
 	// Since the pixel is an unsigned char, the following variables are always ints.
 	// Access pointer. Moving during the loop operation
     unsigned char *pixel = pixelBase;
-    uint32_t sumOfRed = 0, sumOfGreen = 0;
+    uint32_t sumOfRed = 0;
     for (int row = 0; row < bufferHeight; row++) {
         for (int col = 0; col < bufferWidth; col++) {
             // Cb = 128.0f - me - (0.331264f * pixel[1]) + (pixel[0] / 2.0f);
@@ -577,120 +577,50 @@ int detect_peak(
 					sum += tmp[row-1][col-3] + tmp[row-1][col-2] + tmp[row-1][col-1] + tmp[row-1][col];
 					sum += tmp[row][col-3] + tmp[row][col-2] + tmp[row][col-1] + tmp[row][col];
                     //calculate sume of Y
-                CGFloat sumY = tmpY[row-3][col-3] + tmpY[row-3][col-2] + tmpY[row-3][col-1] + tmpY[row-3][col];
+                if (sum < 16)
+                    lesstemp[row/4][col/4] = 0;
+                else {
+                    CGFloat sumY = tmpY[row-3][col-3] + tmpY[row-3][col-2] + tmpY[row-3][col-1] + tmpY[row-3][col];
                     sumY += tmpY[row-2][col-3] + tmpY[row-2][col-2] + tmpY[row-2][col-1] + tmpY[row-2][col];
                     sumY += tmpY[row-1][col-3] + tmpY[row-1][col-2] + tmpY[row-1][col-1] + tmpY[row-1][col];
                     sumY += tmpY[row][col-3] + tmpY[row][col-2] + tmpY[row][col-1] + tmpY[row][col];
-                sumY = sumY * 0.0625f;
-                CGFloat devSumY = (tmpY[row-3][col-3] - sumY) * (tmpY[row-3][col-3] - sumY);
-                devSumY += (tmpY[row-3][col-2] - sumY) * (tmpY[row-3][col-2] - sumY);
-                devSumY += (tmpY[row-3][col-1] - sumY) * (tmpY[row-3][col-1] - sumY);
-                devSumY += (tmpY[row-3][col-0] - sumY) * (tmpY[row-3][col-0] - sumY);
-                
-                devSumY += (tmpY[row-2][col-3] - sumY) * (tmpY[row-2][col-3] - sumY);
-                devSumY += (tmpY[row-2][col-2] - sumY) * (tmpY[row-2][col-2] - sumY);
-                devSumY += (tmpY[row-2][col-1] - sumY) * (tmpY[row-2][col-1] - sumY);
-                devSumY += (tmpY[row-2][col-0] - sumY) * (tmpY[row-2][col-0] - sumY);
-                
-                devSumY += (tmpY[row-1][col-3] - sumY) * (tmpY[row-1][col-3] - sumY);
-                devSumY += (tmpY[row-1][col-2] - sumY) * (tmpY[row-1][col-2] - sumY);
-                devSumY += (tmpY[row-1][col-1] - sumY) * (tmpY[row-1][col-1] - sumY);
-                devSumY += (tmpY[row-1][col-0] - sumY) * (tmpY[row-1][col-0] - sumY);
-            
-                devSumY += (tmpY[row][col-3] - sumY) * (tmpY[row][col-3] - sumY);
-                devSumY += (tmpY[row][col-2] - sumY) * (tmpY[row][col-2] - sumY);
-                devSumY += (tmpY[row][col-1] - sumY) * (tmpY[row][col-1] - sumY);
-                devSumY += (tmpY[row][col-0] - sumY) * (tmpY[row][col-0] - sumY);
-//                if (sum < 16) {
-//                if (devSumY < 64.0f) {
-                if (sum < 16 || devSumY < 64.0f) {
+                    sumY = sumY * 0.0625f;
+                    CGFloat devSumY = (tmpY[row-3][col-3] - sumY) * (tmpY[row-3][col-3] - sumY);
+                    devSumY += (tmpY[row-3][col-2] - sumY) * (tmpY[row-3][col-2] - sumY);
+                    devSumY += (tmpY[row-3][col-1] - sumY) * (tmpY[row-3][col-1] - sumY);
+                    devSumY += (tmpY[row-3][col-0] - sumY) * (tmpY[row-3][col-0] - sumY);
+                    
+                    devSumY += (tmpY[row-2][col-3] - sumY) * (tmpY[row-2][col-3] - sumY);
+                    devSumY += (tmpY[row-2][col-2] - sumY) * (tmpY[row-2][col-2] - sumY);
+                    devSumY += (tmpY[row-2][col-1] - sumY) * (tmpY[row-2][col-1] - sumY);
+                    devSumY += (tmpY[row-2][col-0] - sumY) * (tmpY[row-2][col-0] - sumY);
+                    
+                    devSumY += (tmpY[row-1][col-3] - sumY) * (tmpY[row-1][col-3] - sumY);
+                    devSumY += (tmpY[row-1][col-2] - sumY) * (tmpY[row-1][col-2] - sumY);
+                    devSumY += (tmpY[row-1][col-1] - sumY) * (tmpY[row-1][col-1] - sumY);
+                    devSumY += (tmpY[row-1][col-0] - sumY) * (tmpY[row-1][col-0] - sumY);
+                    
+                    devSumY += (tmpY[row][col-3] - sumY) * (tmpY[row][col-3] - sumY);
+                    devSumY += (tmpY[row][col-2] - sumY) * (tmpY[row][col-2] - sumY);
+                    devSumY += (tmpY[row][col-1] - sumY) * (tmpY[row][col-1] - sumY);
+                    devSumY += (tmpY[row][col-0] - sumY) * (tmpY[row][col-0] - sumY);
+                    if (devSumY < 64.0f)
                         // The skin area should be:
                         // a. Step 2: sum of the 4 by 4 block equal to 16;
                         // b. standard deviation of the 4 by 4 block greater than 2.
                     
 						// Optimized: this should still work because
 						// 3/4 = 0, 7/4 = 1, ..., 956/4 = 239 in int arithmatic.
-                    lesstemp[row/4][col/4] = 0;
-                }
-                else {
-                    lesstemp[row/4][col/4] = 1;
-                }
-					// 2. Return to reality
+                        lesstemp[row/4][col/4] = 0;
+                    else {
+                        lesstemp[row/4][col/4] = 1;
+                    }
+                }// 2. Return to reality
 			}
 			pixel += BYTES_PER_PIXEL;
 		}
 		pixel += BYTES_PER_PIXEL;
 	}
-		/* Step 2 cont. Reduce both sides by 4 times. Problem: this is not proof yet.
-		pixel = pixelBase;
-        for (int row = 0; row < bufferHeight; row += 4) {
-            for (int col = 0; col < bufferWidth; col += 4) {
-                //check the 4by4 Y value
-				unsigned char *pixelTemp = pixel;
-			    SumY = 0.0f;
-				for (int row = 0; row < 4; row++) {
-					for (int col = 0; col < 4; col++){
-						Y = 16.0f+0.256789f*pixelTemp[2]+0.5041289f*pixelTemp[1]+0.09790625f*pixelTemp[0];
-						SumY += Y;
-						pixelTemp += BYTES_PER_PIXEL;
-					}
-					pixelTemp += BYTES_PER_PIXEL;
-				}
-				pixelTemp = pixel;
-				
-				CGFloat Mu = SumY/16.0f;
-				
-				CGFloat stdDev = 0.0f;
-				for (int row = 0; row < 4; row++) {
-					for (int col = 0; col < 4; col++){
-						Y = 16.0f+0.256789f*pixelTemp[2]+0.5041289f*pixelTemp[1]+0.09790625f*pixelTemp[0];
-						stdDev += (Y-Mu)*(Y-Mu);
-						pixelTemp += BYTES_PER_PIXEL;
-					}
-					pixelTemp += BYTES_PER_PIXEL;
-				}
-				stdDev = sqrtf(stdDev/16.0f);
-				
-                if ((stdDev >= 3.5f) && (lesstemp[row/4][col/4] == 1)) {
-					lesstemp[row/4][col/4] = 1;
-                }
-                else {
-					lesstemp[row/4][col/4] = 0;
-                }
-                pixel += 4 * BYTES_PER_PIXEL;
-            }
-            pixel += (3 * bufferWidth) * BYTES_PER_PIXEL;
-        }
-		 */
-		// Step 3:
-/*		pixel = pixelBase;
-		CGFloat SumY = 0.0f;
-		for (int row = 0; row < bufferHeight; row++) {
-		    for (int col = 0; col < bufferWidth; col++){
-				Y = 16.0f+0.256789f*pixel[2]+0.5041289f*pixel[1]+0.09790625f*pixel[0];
-				SumY += Y;
-				pixel += BYTES_PER_PIXEL;
-			}
-			pixel += BYTES_PER_PIXEL;
-		}
-		
-		CGFloat Mu = SumY / (bufferHeight * bufferWidth);
-        CGFloat stdDev = 0.0f;
-		pixel = pixelBase;
-		for (int row = 0; row < bufferHeight; row++) {
-		    for (int col = 0; col < bufferWidth; col++){
-				Y = 16.0f+0.256789f*pixel[2]+0.5041289f*pixel[1]+0.09790625f*pixel[0];
-				// Average value
-                stdDev += (Y-Mu)*(Y-Mu);
-				
-				pixel += BYTES_PER_PIXEL;
-			}
-			pixel += BYTES_PER_PIXEL;
-		}
-		stdDev = sqrtf(stdDev/(bufferHeight * bufferWidth));
-*/
-		
-		// Finally: draw using bitmap
     pixel = pixelBase;
     for (int row = 0; row < bufferHeight; row++) {
         for (int col = 0; col < bufferWidth; col++) {
