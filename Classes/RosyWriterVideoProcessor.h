@@ -3,6 +3,11 @@
 #import <CoreMedia/CMBufferQueue.h>
 #define MAX_NUM_FRAMES 360
 #define NUM_OF_RED_AVERAGE 300
+#define RECORDING_STAGE1 10
+#define RECORDING_STAGE2 40
+#define RED_INDEX frame_number-RECORDING_STAGE2
+#define RECORDING_STAGE3 340
+
 @protocol RosyWriterVideoProcessorDelegate;
 
 @interface RosyWriterVideoProcessor : NSObject <AVCaptureAudioDataOutputSampleBufferDelegate, AVCaptureVideoDataOutputSampleBufferDelegate> 
@@ -46,12 +51,9 @@
     int sizeOfCollectedData;
     BOOL isUsingFrontCamera;
 	double arrayOfRedChannelAverage[NUM_OF_RED_AVERAGE];
-//	double arrayOfGreenChannelAverage[MAX_NUM_FRAMES];
     BOOL tmp[540][960];
     BOOL lesstemp[135][240];
     CGFloat tmpY[540][960];
-    /* CIImage
-    CIContext *ciContext;*/
     
 	// Only accessed on movie writing queue
     BOOL readyToRecordAudio; 

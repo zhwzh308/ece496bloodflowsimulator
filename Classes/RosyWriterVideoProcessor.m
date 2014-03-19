@@ -43,7 +43,6 @@
         previousFrameAverageGreen1 = previousFrameAverageGreen0;
         frame_number = 0;
         isUsingFrontCamera = NO;
-		//tmp = (BOOL *)malloc(sizeof(BOOL) * 960 * 540 );
 		_heartRate=0.0f;
 		frontCamera = nil;
 		backCamera = nil;
@@ -301,14 +300,7 @@
 			return;
 		
 		recordingWillBeStopped = YES;
-		
-		// recordingDidStop is called from saveMovieToCameraRoll
 		[self.delegate recordingWillStop];
-        //[assetWriter finishWriting]
-        //[assetWriter finishWritingWithCompletionHandler:^(){
-        //  NSLog (@"finished writing");
-        //  This method returns immediately and causes its work to be performed asynchronously.
-        //  }];
 
 		if ([assetWriter finishWriting]) {
 			[assetWriterAudioIn release];
@@ -340,7 +332,7 @@
 	// Since the pixel is an unsigned char, the following variables are always ints.
 	// Access pointer. Moving during the loop operation
     unsigned char *pixel = pixelBase;
-    uint32_t sumOfRed = 0, sumOfGreen = 0; // max 4e+10, enough to sum bufferSize * 255
+    uint32_t sumOfRed = 0, sumOfGreen = 0;
     for (int row = 0; row < bufferHeight; row++) {
         for (int col = 0; col < bufferWidth; col++) {
             // Cb = 128.0f - me - (0.331264f * pixel[1]) + (pixel[0] / 2.0f);
@@ -350,13 +342,14 @@
         pixel += BYTES_PER_PIXEL;
     }
     double RedAvg = ((double) sumOfRed) / bufferSize;
-    NSLog(@"frame = %d, RedAvg = %f\n", frame_number - 40, RedAvg);
-    if (RedAvg < 200.0f && frame_number < MAX_NUM_FRAMES) {
-        NSLog(@"failed./n");
-        frame_number = 41;
+    NSLog(@"frame = %d, RedAvg = %f\n", RED_INDEX, RedAvg);
+    if (frame_number >= RECORDING_STAGE2 && frame_number < RECORDING_STAGE3) {
+        if (RedAvg < 200.0f && RED_INDEX < NUM_OF_RED_AVERAGE) {
+            NSLog(@"failed./n");
+            frame_number = RECORDING_STAGE2;
+        }
+        arrayOfRedChannelAverage[RED_INDEX] = RedAvg;
     }
-    if (frame_number >= 70)
-        arrayOfRedChannelAverage[frame_number - 40] = RedAvg;
 	CVPixelBufferUnlockBaseAddress( pixelBuffer, 0 );
 }
 
@@ -739,14 +732,14 @@ int detect_peak(
 		if ( self.videoType == 0 )
 			self.videoType = CMFormatDescriptionGetMediaSubType( formatDescription );
 		if (frame_number < MAX_NUM_FRAMES) {
-			if (frame_number == 10) // 10th frame
+			if (frame_number == RECORDING_STAGE1) // 10th frame
 				[self switchDeviceTorchMode:backCamera];
-			else if (frame_number == MAX_NUM_FRAMES-10) { // 350th frame
+			else if (frame_number == RECORDING_STAGE3) { // 340th frame
 				[self switchDeviceTorchMode:backCamera];
 			}
             // 1. Collect average color channel values for HR estimation
             // 2. Synchronously process the pixel buffer
-            if (frame_number >= 40 && frame_number < 340) {
+            if (frame_number >= RECORDING_STAGE2 && frame_number < RECORDING_STAGE3) {
                 // Allow 1 second time to adjust the camera exposure.
                 // Fill 300 datapoints
                 [self fillInArray:CMSampleBufferGetImageBuffer(sampleBuffer)];
