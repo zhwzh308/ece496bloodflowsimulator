@@ -1,8 +1,8 @@
 #import <AVFoundation/AVFoundation.h>
 #import <Accelerate/Accelerate.h>
 #import <CoreMedia/CMBufferQueue.h>
-#define MAX_NUM_FRAMES 330
-#define NUM_OF_RED_AVERAGE 250
+#define MAX_NUM_FRAMES 360
+#define NUM_OF_RED_AVERAGE 300
 @protocol RosyWriterVideoProcessorDelegate;
 
 @interface RosyWriterVideoProcessor : NSObject <AVCaptureAudioDataOutputSampleBufferDelegate, AVCaptureVideoDataOutputSampleBufferDelegate> 

@@ -343,30 +343,20 @@
     uint32_t sumOfRed = 0, sumOfGreen = 0; // max 4e+10, enough to sum bufferSize * 255
     for (int row = 0; row < bufferHeight; row++) {
         for (int col = 0; col < bufferWidth; col++) {
-            //Cb = 128.0f - me - (0.331264f * pixel[1]) + (pixel[0] / 2.0f);
+            // Cb = 128.0f - me - (0.331264f * pixel[1]) + (pixel[0] / 2.0f);
             sumOfRed += pixel[2];
-//            sumOfGreen += pixel[1];
             pixel += BYTES_PER_PIXEL;
         }
         pixel += BYTES_PER_PIXEL;
     }
-    // runtime frame averages.
     double RedAvg = ((double) sumOfRed) / bufferSize;
-    NSLog(@"frame = %d, RedAvg = %f\n", frame_number-70, RedAvg);
-/*
-    NSLog(@"frame = %d, RedAvg = %f\n", frame_number, RedAvg);
-    if (RedAvg < 240 && frame_number < MAX_NUM_FRAMES)
-        frame_number = 71;
-    else
-        arrayOfRedChannelAverage[frame_number - 70] = RedAvg;
-*/
-    if (RedAvg < 200.0f && frame_number < 321) {
+    NSLog(@"frame = %d, RedAvg = %f\n", frame_number - 40, RedAvg);
+    if (RedAvg < 200.0f && frame_number < MAX_NUM_FRAMES) {
         NSLog(@"failed./n");
-        frame_number = 11;
+        frame_number = 41;
     }
     if (frame_number >= 70)
-        arrayOfRedChannelAverage[frame_number - 70] = RedAvg;
-//    arrayOfGreenChannelAverage[frame_number - 70] = ((double) sumOfGreen) / bufferSize;
+        arrayOfRedChannelAverage[frame_number - 40] = RedAvg;
 	CVPixelBufferUnlockBaseAddress( pixelBuffer, 0 );
 }
 
@@ -417,7 +407,7 @@
 			
 			differences = (int *) malloc(sizeof(int)*(num_emi_peaks-1));
 			memset(differences,0,sizeof(int)*(num_emi_peaks-1));
-			sizeOfDifferences = num_emi_peaks-1;
+			sizeOfDifferences = num_emi_peaks - 1;
 			sizeOfCollectedData = frame_number;
 			for (int i = 0; i < num_emi_peaks-1;++i){
 				if (peak_values[i] < 255){ // it's counting mx = MAXDBL as a max
@@ -439,7 +429,7 @@
 					differences[i] = 0;
 				}
 				// print the calculated differences, for easier debugging!
-				printf("%d - %d = %d\n", peak_indices[i+1],peak_indices[i],differences[i]);
+				printf("%d - %d = %d\n", peak_indices[i+1], peak_indices[i], differences[i]);
 			}
 			
 			//Sometimes the last one shows a false peak.
@@ -463,7 +453,7 @@
 					numSums = numSums + 1;
 				}
 			}
-			_heartRate = 60 * frame_number / (10 * sum/numSums) * 0.75f;
+			_heartRate = 60 * NUM_OF_RED_AVERAGE / (10 * sum/numSums) * 0.75f;
 			NSLog(@"Heart rate measured is %f", _heartRate);
 		}
 	}
@@ -749,30 +739,20 @@ int detect_peak(
 		if ( self.videoType == 0 )
 			self.videoType = CMFormatDescriptionGetMediaSubType( formatDescription );
 		if (frame_number < MAX_NUM_FRAMES) {
-			if (frame_number == 10)
+			if (frame_number == 10) // 10th frame
 				[self switchDeviceTorchMode:backCamera];
-			if (frame_number == MAX_NUM_FRAMES-10) {
+			else if (frame_number == MAX_NUM_FRAMES-10) { // 350th frame
 				[self switchDeviceTorchMode:backCamera];
 			}
-            // Collect average color channel values for HR estimation
-            // Synchronously process the pixel buffer
-            if (frame_number > 70) {
+            // 1. Collect average color channel values for HR estimation
+            // 2. Synchronously process the pixel buffer
+            if (frame_number >= 40 && frame_number < 340) {
+                // Allow 1 second time to adjust the camera exposure.
+                // Fill 300 datapoints
                 [self fillInArray:CMSampleBufferGetImageBuffer(sampleBuffer)];
             }
             frame_number++;
 		}
-/*
-        if ((frame_number == MAX_NUM_FRAMES) && (arrayOfRedChannelAverage[70]<240 || arrayOfRedChannelAverage[160]<240 || arrayOfRedChannelAverage[249]<240)) {
-            NSLog(@"in if./n");
-            frame_number = 71;
-        }
-*/
-/*
-        if (frame_number == MAX_NUM_FRAMES) {
-            for (int a = 0; a < NUM_OF_RED_AVERAGE; a++)
-                
-        }
- */
         else {
             if (!isUsingFrontCamera) {
 				[self heartRateEstimate];
@@ -781,9 +761,7 @@ int detect_peak(
                 [self setupAndStartCaptureSession];
             }
             else {
-            // Start simulation
                 [self createBitmapsfromPixelBuffer:CMSampleBufferGetImageBuffer(sampleBuffer)];
-            //frame_number = 0;
             }
         }
 		 
@@ -886,8 +864,6 @@ int detect_peak(
 - (void) switchDeviceAE:(AVCaptureDevice *)device {
     if ([device isExposureModeSupported:AVCaptureExposureModeLocked]) {
         NSError *error = nil;
-        //CGPoint exposurePoint = autofocusPoint;
-        //[device setExposurePointOfInterest:exposurePoint];
         if ([device lockForConfiguration:&error]) {
             [device setExposureMode:AVCaptureExposureModeLocked];
             [device unlockForConfiguration];
