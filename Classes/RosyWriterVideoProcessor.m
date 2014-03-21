@@ -84,6 +84,124 @@
     tmpY[row][col] = Y;
 }
 
+- (void) step1_pixelFromRGB:(unsigned char *)p row:(int)row column:(int) col
+{
+    tmp2[row][col] = ((p[2] >= 95) && (p[1] >40) && (p[0] >= 20) && (fmaxf(p[2], (fmaxf(p[1], p[0])) - fminf(p[2], fminf(p[1], p[0]))) > 15) && (p[2] > p[0]) && (p[1] > p[0]) && (fabsf(p[2] - p[1]) <= 15.0f));
+}
+
+- (void) plotInHoles
+    // step 4: plot in holes. seems like repeat 8 times will have better performance.
+{
+    for (int row = 2; row < 480; row++) {
+        for (int col = 2; col < 640; col++) {
+            int sum = tmp[row-2][col-2] + tmp[row-2][col-1] + tmp[row-2][col];
+            sum += tmp[row-1][col-2] + tmp[row-1][col-1] + tmp[row-1][col-0];
+            sum += tmp[row][col-2] + tmp[row][col-1] + tmp[row][col];
+            if ((tmp[row][col] == 1) && sum > 3)
+                tmp2[row][col] = 1;
+            else if ((tmp[row][col] == 0) && sum > 5)
+                tmp2[row][col] = 1;
+            else
+                tmp2[row][col] = 0;
+        }
+    }
+    for (int row = 2; row < 480; row++) {
+        for (int col = 2; col < 640; col++) {
+            int sum = tmp2[row-2][col-2] + tmp2[row-2][col-1] + tmp2[row-2][col];
+            sum += tmp2[row-1][col-2] + tmp2[row-1][col-1] + tmp2[row-1][col-0];
+            sum += tmp2[row][col-2] + tmp2[row][col-1] + tmp2[row][col];
+            if ((tmp2[row][col] == 1) && sum > 3)
+                tmp[row][col] = 1;
+            else if ((tmp2[row][col] == 0) && sum > 5)
+                tmp[row][col] = 1;
+            else
+                tmp[row][col] = 0;
+        }
+    }
+    for (int row = 2; row < 480; row++) {
+        for (int col = 2; col < 640; col++) {
+            int sum = tmp[row-2][col-2] + tmp[row-2][col-1] + tmp[row-2][col];
+            sum += tmp[row-1][col-2] + tmp[row-1][col-1] + tmp[row-1][col-0];
+            sum += tmp[row][col-2] + tmp[row][col-1] + tmp[row][col];
+            if ((tmp[row][col] == 1) && sum > 3)
+                tmp2[row][col] = 1;
+            else if ((tmp[row][col] == 0) && sum > 5)
+                tmp2[row][col] = 1;
+            else
+                tmp2[row][col] = 0;
+        }
+    }
+    for (int row = 2; row < 480; row++) {
+        for (int col = 2; col < 640; col++) {
+            int sum = tmp2[row-2][col-2] + tmp2[row-2][col-1] + tmp2[row-2][col];
+            sum += tmp2[row-1][col-2] + tmp2[row-1][col-1] + tmp2[row-1][col-0];
+            sum += tmp2[row][col-2] + tmp2[row][col-1] + tmp2[row][col];
+            if ((tmp2[row][col] == 1) && sum > 3)
+                tmp[row][col] = 1;
+            else if ((tmp2[row][col] == 0) && sum > 5)
+                tmp[row][col] = 1;
+            else
+                tmp[row][col] = 0;
+        }
+    }
+    for (int row = 2; row < 480; row++) {
+        for (int col = 2; col < 640; col++) {
+            int sum = tmp[row-2][col-2] + tmp[row-2][col-1] + tmp[row-2][col];
+            sum += tmp[row-1][col-2] + tmp[row-1][col-1] + tmp[row-1][col-0];
+            sum += tmp[row][col-2] + tmp[row][col-1] + tmp[row][col];
+            if ((tmp[row][col] == 1) && sum > 3)
+                tmp2[row][col] = 1;
+            else if ((tmp[row][col] == 0) && sum > 5)
+                tmp2[row][col] = 1;
+            else
+                tmp2[row][col] = 0;
+        }
+    }
+    for (int row = 2; row < 480; row++) {
+        for (int col = 2; col < 640; col++) {
+            int sum = tmp2[row-2][col-2] + tmp2[row-2][col-1] + tmp2[row-2][col];
+            sum += tmp2[row-1][col-2] + tmp2[row-1][col-1] + tmp2[row-1][col-0];
+            sum += tmp2[row][col-2] + tmp2[row][col-1] + tmp2[row][col];
+            if ((tmp2[row][col] == 1) && sum > 3)
+                tmp[row][col] = 1;
+            else if ((tmp2[row][col] == 0) && sum > 5)
+                tmp[row][col] = 1;
+            else
+                tmp[row][col] = 0;
+        }
+    }
+    for (int row = 2; row < 480; row++) {
+        for (int col = 2; col < 640; col++) {
+            int sum = tmp[row-2][col-2] + tmp[row-2][col-1] + tmp[row-2][col];
+            sum += tmp[row-1][col-2] + tmp[row-1][col-1] + tmp[row-1][col-0];
+            sum += tmp[row][col-2] + tmp[row][col-1] + tmp[row][col];
+            if ((tmp[row][col] == 1) && sum > 3)
+                tmp2[row][col] = 1;
+            else if ((tmp[row][col] == 0) && sum > 5)
+                tmp2[row][col] = 1;
+            else
+                tmp2[row][col] = 0;
+        }
+    }
+    for (int row = 2; row < 480; row++) {
+        for (int col = 2; col < 640; col++) {
+            int sum = tmp2[row-2][col-2] + tmp2[row-2][col-1] + tmp2[row-2][col];
+            sum += tmp2[row-1][col-2] + tmp2[row-1][col-1] + tmp2[row-1][col-0];
+            sum += tmp2[row][col-2] + tmp2[row][col-1] + tmp2[row][col];
+            if ((tmp2[row][col] == 1) && sum > 3)
+                tmp[row][col] = 1;
+            else if ((tmp2[row][col] == 0) && sum > 5)
+                tmp[row][col] = 1;
+            else
+                tmp[row][col] = 0;
+        }
+    }
+}
+
+//if ((r>220)&(g>210)&(b>170)&(abs(r-g)<=15)&(r>b)&(g>b))
+
+// if ((r>95)&(g>40)&(b>20)&((max(r,max(g,b))-min(r,min(g,b)))>15)&(((r-g)>15)|((g-r)>15))&(r>g)&(r>b))
+
 - (void)removeFile:(NSURL *)fileURL
 {
     NSFileManager *fileManager = [NSFileManager defaultManager];
@@ -565,8 +683,9 @@ int detect_peak(
         for (int col = 0; col < bufferWidth; col++) {
             // Step 1. Chrominance threshold, large bitmap
             [self step1_pixelFromRGBtoYCbCr:pixel row:row column:col];
-			
+//			[self step1_pixelFromRGB:pixel row:row column:col];
 			// Step 2. Set low res bitmap
+            
             if ( !( ((row+1) % 4) || ((col+1) % 4) ) ) {
 					// that is, on row 3, 7, 11, etc
 					// after col 3, 7, 11, etc inclusive
@@ -617,23 +736,59 @@ int detect_peak(
                     }
                 }// 2. Return to reality
 			}
+            
 			pixel += BYTES_PER_PIXEL;
 		}
 		pixel += BYTES_PER_PIXEL;
 	}
     pixel = pixelBase;
+    
+
     for (int row = 0; row < bufferHeight; row++) {
         for (int col = 0; col < bufferWidth; col++) {
- //           if (tmp[row][col]) {
             if (lesstemp[row/4][col/4]) {
+ //           if (!((!lesstemp[row/4][col/4]) || tmp2[row][col])) {
+              /*  CGFloat to_color = ((float) pixel[2]) + hr_sim;
+                if (to_color >= 255.0f) {
+                    pixel[2] = 255;
+                } else if (to_color <= 0.0f){
+                    pixel[2] = 0;
+                }
+                else {
+                    pixel[2] = 0;
+                    pixel[1] = 0;
+                    pixel[0] = 0;
+                }*/
+                tmp[row][col] = 1;
+//                pixel[2] = 0;
+//                pixel[1] = 0;
+//                pixel[0] = 0;
+//                    pixel[2] = (unsigned char) to_color;
+            }
+            pixel += BYTES_PER_PIXEL;
+        }
+        pixel += BYTES_PER_PIXEL;
+    }
+//    [self plotInHoles];
+    pixel = pixelBase;
+
+    for (int row = 0; row < bufferHeight; row++) {
+        for (int col = 0; col < bufferWidth; col++) {
+            //           if ((tmp[row][col])) {
+            if (tmp[row][col]) {
+                
                 CGFloat to_color = ((float) pixel[2]) + hr_sim;
                 if (to_color >= 255.0f) {
                     pixel[2] = 255;
                 } else if (to_color <= 0.0f){
                     pixel[2] = 0;
                 }
-                else
+                else {
                     pixel[2] = (unsigned char) to_color;
+                }
+//                pixel[2] = 0;
+//                pixel[1] = 0;
+//                pixel[0] = 0;
             }
             pixel += BYTES_PER_PIXEL;
         }
