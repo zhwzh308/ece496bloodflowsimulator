@@ -46,16 +46,19 @@
     /* Added by team */
     int frame_number;
     CGFloat currentTime;
+	size_t bufferWidth;
+    size_t bufferHeight;
     int *differences;
     int sizeOfDifferences;
     int sizeOfCollectedData;
     BOOL isUsingFrontCamera;
 	double arrayOfRedChannelAverage[NUM_OF_RED_AVERAGE];
-//    BOOL tmp[540][960];
-    BOOL tmp[480][640];
-    BOOL tmp2[480][640];
-    BOOL lesstemp[120][160];
-    CGFloat tmpY[480][640];
+    // Choosing maximum value so that profiles are compatible.
+    // iPhone 5s: 1136 x 640, 4/4s 960 x 640.
+    BOOL tmp[540][960];
+    BOOL tmp2[540][960];
+    BOOL lesstemp[135][240];
+    CGFloat tmpY[540][960];
     
 	// Only accessed on movie writing queue
     BOOL readyToRecordAudio; 

@@ -92,8 +92,8 @@
 - (void) plotInHoles
     // step 4: plot in holes. seems like repeat 8 times will have better performance.
 {
-    for (int row = 2; row < 480; row++) {
-        for (int col = 2; col < 640; col++) {
+    for (int row = 2; row < bufferWidth; row++) {
+        for (int col = 2; col < bufferHeight; col++) {
             int sum = tmp[row-2][col-2] + tmp[row-2][col-1] + tmp[row-2][col];
             sum += tmp[row-1][col-2] + tmp[row-1][col-1] + tmp[row-1][col-0];
             sum += tmp[row][col-2] + tmp[row][col-1] + tmp[row][col];
@@ -105,8 +105,8 @@
                 tmp2[row][col] = 0;
         }
     }
-    for (int row = 2; row < 480; row++) {
-        for (int col = 2; col < 640; col++) {
+    for (int row = 2; row < bufferWidth; row++) {
+        for (int col = 2; col < bufferHeight; col++) {
             int sum = tmp2[row-2][col-2] + tmp2[row-2][col-1] + tmp2[row-2][col];
             sum += tmp2[row-1][col-2] + tmp2[row-1][col-1] + tmp2[row-1][col-0];
             sum += tmp2[row][col-2] + tmp2[row][col-1] + tmp2[row][col];
@@ -118,8 +118,8 @@
                 tmp[row][col] = 0;
         }
     }
-    for (int row = 2; row < 480; row++) {
-        for (int col = 2; col < 640; col++) {
+    for (int row = 2; row < bufferWidth; row++) {
+        for (int col = 2; col < bufferHeight; col++) {
             int sum = tmp[row-2][col-2] + tmp[row-2][col-1] + tmp[row-2][col];
             sum += tmp[row-1][col-2] + tmp[row-1][col-1] + tmp[row-1][col-0];
             sum += tmp[row][col-2] + tmp[row][col-1] + tmp[row][col];
@@ -131,8 +131,8 @@
                 tmp2[row][col] = 0;
         }
     }
-    for (int row = 2; row < 480; row++) {
-        for (int col = 2; col < 640; col++) {
+    for (int row = 2; row < bufferWidth; row++) {
+        for (int col = 2; col < bufferHeight; col++) {
             int sum = tmp2[row-2][col-2] + tmp2[row-2][col-1] + tmp2[row-2][col];
             sum += tmp2[row-1][col-2] + tmp2[row-1][col-1] + tmp2[row-1][col-0];
             sum += tmp2[row][col-2] + tmp2[row][col-1] + tmp2[row][col];
@@ -144,8 +144,8 @@
                 tmp[row][col] = 0;
         }
     }
-    for (int row = 2; row < 480; row++) {
-        for (int col = 2; col < 640; col++) {
+    for (int row = 2; row < bufferWidth; row++) {
+        for (int col = 2; col < bufferHeight; col++) {
             int sum = tmp[row-2][col-2] + tmp[row-2][col-1] + tmp[row-2][col];
             sum += tmp[row-1][col-2] + tmp[row-1][col-1] + tmp[row-1][col-0];
             sum += tmp[row][col-2] + tmp[row][col-1] + tmp[row][col];
@@ -157,8 +157,8 @@
                 tmp2[row][col] = 0;
         }
     }
-    for (int row = 2; row < 480; row++) {
-        for (int col = 2; col < 640; col++) {
+    for (int row = 2; row < bufferWidth; row++) {
+        for (int col = 2; col < bufferHeight; col++) {
             int sum = tmp2[row-2][col-2] + tmp2[row-2][col-1] + tmp2[row-2][col];
             sum += tmp2[row-1][col-2] + tmp2[row-1][col-1] + tmp2[row-1][col-0];
             sum += tmp2[row][col-2] + tmp2[row][col-1] + tmp2[row][col];
@@ -170,8 +170,8 @@
                 tmp[row][col] = 0;
         }
     }
-    for (int row = 2; row < 480; row++) {
-        for (int col = 2; col < 640; col++) {
+    for (int row = 2; row < bufferWidth; row++) {
+        for (int col = 2; col < bufferHeight; col++) {
             int sum = tmp[row-2][col-2] + tmp[row-2][col-1] + tmp[row-2][col];
             sum += tmp[row-1][col-2] + tmp[row-1][col-1] + tmp[row-1][col-0];
             sum += tmp[row][col-2] + tmp[row][col-1] + tmp[row][col];
@@ -183,8 +183,8 @@
                 tmp2[row][col] = 0;
         }
     }
-    for (int row = 2; row < 480; row++) {
-        for (int col = 2; col < 640; col++) {
+    for (int row = 2; row < bufferWidth; row++) {
+        for (int col = 2; col < bufferHeight; col++) {
             int sum = tmp2[row-2][col-2] + tmp2[row-2][col-1] + tmp2[row-2][col];
             sum += tmp2[row-1][col-2] + tmp2[row-1][col-1] + tmp2[row-1][col-0];
             sum += tmp2[row][col-2] + tmp2[row][col-1] + tmp2[row][col];
@@ -197,10 +197,6 @@
         }
     }
 }
-
-//if ((r>220)&(g>210)&(b>170)&(abs(r-g)<=15)&(r>b)&(g>b))
-
-// if ((r>95)&(g>40)&(b>20)&((max(r,max(g,b))-min(r,min(g,b)))>15)&(((r-g)>15)|((g-r)>15))&(r>g)&(r>b))
 
 - (void)removeFile:(NSURL *)fileURL
 {
@@ -666,8 +662,8 @@ int detect_peak(
 - (void)createBitmapsfromPixelBuffer: (CVImageBufferRef)pixelBuffer
 {
 	CVPixelBufferLockBaseAddress( pixelBuffer, 0 );
-	size_t bufferWidth = CVPixelBufferGetWidth(pixelBuffer);
-    size_t bufferHeight = CVPixelBufferGetHeight(pixelBuffer);
+	bufferWidth = CVPixelBufferGetWidth(pixelBuffer);
+    bufferHeight = CVPixelBufferGetHeight(pixelBuffer);
     
 	unsigned char *pixelBase = (unsigned char *)CVPixelBufferGetBaseAddress(pixelBuffer);
 
