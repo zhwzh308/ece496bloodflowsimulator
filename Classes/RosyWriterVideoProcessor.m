@@ -437,10 +437,9 @@
 - (void)fillInArray: (CVImageBufferRef)pixelBuffer
 {
 	CVPixelBufferLockBaseAddress( pixelBuffer, 0 );
-	size_t bufferWidth = CVPixelBufferGetWidth(pixelBuffer);
-    size_t bufferHeight = CVPixelBufferGetHeight(pixelBuffer);
+	bufferWidth = CVPixelBufferGetWidth(pixelBuffer);
+    bufferHeight = CVPixelBufferGetHeight(pixelBuffer);
 	// Total number of pixels.
-	size_t bufferSize = bufferHeight * bufferWidth;
 	unsigned char *pixelBase = (unsigned char *)CVPixelBufferGetBaseAddress(pixelBuffer);
 	
 	// Since the pixel is an unsigned char, the following variables are always ints.
@@ -455,7 +454,7 @@
         }
         pixel += BYTES_PER_PIXEL;
     }
-    double RedAvg = ((double) sumOfRed) / bufferSize;
+    double RedAvg = ((double) sumOfRed) / (bufferHeight * bufferWidth);
     NSLog(@"frame = %d, RedAvg = %f\n", RED_INDEX, RedAvg);
     if (frame_number >= RECORDING_STAGE2 && frame_number < RECORDING_STAGE3) {
         if (RedAvg < 200.0f && RED_INDEX < NUM_OF_RED_AVERAGE) {
@@ -671,8 +670,6 @@ int detect_peak(
 	// Access pointer. Moving during the loop operation
     unsigned char *pixel = pixelBase;
     // Condition 2: sufficient data is collected, we simulate HR.
-		// Simulation source signal , will use the HR calculated from avg.
-    //CGFloat hr_sim = 40.0f * (sinf(currentTime * 1.256637f) + sinf(2.8274333f * currentTime));// + 80.0f;
 	CGFloat hr_sim = 40.0f * sinf(currentTime * 6.28f * [self heartRate] / 60.0f);
 		// Step 1 and partial 2
     for (int row = 0; row < bufferHeight; row++) {
@@ -739,7 +736,6 @@ int detect_peak(
 	}
     pixel = pixelBase;
     
-
     for (int row = 0; row < bufferHeight; row++) {
         for (int col = 0; col < bufferWidth; col++) {
             if (lesstemp[row/4][col/4]) {
@@ -765,9 +761,9 @@ int detect_peak(
         }
         pixel += BYTES_PER_PIXEL;
     }
-//    [self plotInHoles];
+    
+    // Render loop
     pixel = pixelBase;
-
     for (int row = 0; row < bufferHeight; row++) {
         for (int col = 0; col < bufferWidth; col++) {
             //           if ((tmp[row][col])) {
@@ -782,9 +778,7 @@ int detect_peak(
                 else {
                     pixel[2] = (unsigned char) to_color;
                 }
-//                pixel[2] = 0;
-//                pixel[1] = 0;
-//                pixel[0] = 0;
+                // Use these to check mask: (int) *pixel = (int) 255; // watch out endian
             }
             pixel += BYTES_PER_PIXEL;
         }
@@ -835,7 +829,7 @@ int detect_peak(
                 [self setupAndStartCaptureSession];
             }
             else {
-                [self createBitmapsfromPixelBuffer:CMSampleBufferGetImageBuffer(sampleBuffer)];
+                //[self createBitmapsfromPixelBuffer:CMSampleBufferGetImageBuffer(sampleBuffer)];
             }
         }
 		 
