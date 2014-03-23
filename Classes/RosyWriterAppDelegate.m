@@ -80,7 +80,7 @@
 
 - (void)dealloc {
     [mainViewController release];
-    [window release];
+    //[window release];
     [super dealloc];
 }
 
