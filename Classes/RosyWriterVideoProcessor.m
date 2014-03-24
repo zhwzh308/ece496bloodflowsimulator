@@ -474,24 +474,36 @@ long myEmboss(vImage_Buffer *inData,
 
 - (void)fillInArray: (CVImageBufferRef)pixelBuffer
 {
+	/* Lock pixel bitmap for read only, saving CPU integrity check. */
 	CVPixelBufferLockBaseAddress( pixelBuffer, kCVPixelBufferLock_ReadOnly );
-	bufferWidth = CVPixelBufferGetWidth(pixelBuffer);
-    bufferHeight = CVPixelBufferGetHeight(pixelBuffer);
-    vDSP_Length frameSize = bufferHeight * bufferWidth;
-	// Total number of pixels.
+	/* Refresh parameters once. */
+    if (frame_number == RECORDING_STAGE2) {
+        bufferWidth = CVPixelBufferGetWidth(pixelBuffer);
+        bufferHeight = CVPixelBufferGetHeight(pixelBuffer);
+        /* Total number of pixels. */
+        frameSize = bufferHeight * bufferWidth;
+    }
+	/* first element of BGRA array */
     unsigned char *pixelBase = (unsigned char *)CVPixelBufferGetBaseAddress(pixelBuffer);
-    pixelBase += 2; // move to the first red pixel
+    
+	/* Point head to R pixel. */
+    pixelBase += 2;
+    
+	/* Process frame size of R pixels (fit u8 into floats)
+        source: bitmap
+        destination: float array
+     */
     vDSP_vfltu8(pixelBase, 4, arrayOfFrameRedPixels, 1, frameSize);
-    vDSP_meanv(arrayOfFrameRedPixels,1,&(RedAvg),frameSize);
-    NSLog(@"meanR = %f",RedAvg);
-    if (frame_number >= RECORDING_STAGE2 && frame_number < RECORDING_STAGE3) {
-        if (RedAvg < 0.784f && RED_INDEX < NUM_OF_RED_AVERAGE) {
-            NSLog(@"%f too low, failed./n", RedAvg);
-            frame_number = RECORDING_STAGE2;
-        }
-        else {
-            arrayOfRedChannelAverage[RED_INDEX] = RedAvg;
-        }
+	/* Find mean of this 1xframeSize vector. */
+    vDSP_meanv(arrayOfFrameRedPixels, 1, &(RedAvg), frameSize);
+    if (RedAvg < 200.0f) {
+        NSLog(@"Invalidate current data, starting from scratch.");
+        /* Reset data float collection */
+        frame_number = RECORDING_STAGE2;
+    }
+    else {
+        /* User behaving, add this to the array. */
+        arrayOfRedChannelAverage[RED_INDEX] = RedAvg;
     }
 	CVPixelBufferUnlockBaseAddress( pixelBuffer, kCVPixelBufferLock_ReadOnly );
 }

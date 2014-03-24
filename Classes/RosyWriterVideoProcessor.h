@@ -45,6 +45,7 @@
     unsigned int frame_number;
     // Timing information, for the use of color.
     CGFloat currentTime;
+    vDSP_Length frameSize;
     float RedAvg;
     size_t sumofRed;
     // Frame sizing parameter.
