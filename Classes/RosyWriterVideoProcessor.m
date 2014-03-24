@@ -8,22 +8,14 @@
 #define WG 0.587
 #define WB 0.114
 
-// Typical initializer.
-vImage_CGImageFormat vImageformat = {
-    .bitsPerComponent = 8,
-    .bitsPerPixel = 32,
-    .colorSpace = NULL,
-    .bitmapInfo = kCGImageAlphaFirst,
-    .version = 0,
-    .decode = NULL,
-    .renderingIntent = kCGRenderingIntentDefault,
-};
-
-// Static kernel
+// Static kernel for image convolution.
 //static const signed int kernel_emboss[] = {-2, -2, 0, -2, 6, 0, 0, 0, 0};
 //static const signed int kernel_Gaussianblur[] = {1,2,1,2,4,2,1,2,1};
 //static const signed int kernel_edgeDetection[] = {-1,-1,-1,0,0,0,1,1,1};
-
+const float rgbToYuv[] ={ 0.257,  0.439,  -0.148, 0.06,
+    0.504, -0.368,  -0.291, 0.5,
+    0.098, -0.071,   0.439, 0.5,
+    0.0,     0.0,     0.0, 1.0 };
 @interface RosyWriterVideoProcessor ()
 
 // Redeclared as readwrite so that we can write to the property and still be atomic with external readers.
@@ -485,49 +477,26 @@ long myEmboss(vImage_Buffer *inData,
 	CVPixelBufferLockBaseAddress( pixelBuffer, kCVPixelBufferLock_ReadOnly );
 	bufferWidth = CVPixelBufferGetWidth(pixelBuffer);
     bufferHeight = CVPixelBufferGetHeight(pixelBuffer);
+    vDSP_Length frameSize = bufferHeight * bufferWidth;
 	// Total number of pixels.
-    inBuffer.data = (unsigned char *)CVPixelBufferGetBaseAddress(pixelBuffer);
-	// Since the pixel is an unsigned char, the following variables are always ints.
-	// Access pointer. Moving during the loop operation
-    planarF.height = inBuffer.height = outBufferR.height = outBufferG.height = outBufferB.height = outBufferA.height = bufferHeight;
-    planarF.width = inBuffer.width=outBufferR.width=outBufferG.width=outBufferB.width=outBufferA.width = bufferWidth;
-    rowbytes = CVPixelBufferGetBytesPerRow(pixelBuffer);
-    planarF.rowBytes = inBuffer.rowBytes = rowbytes;
-    outBufferR.rowBytes=outBufferG.rowBytes=outBufferB.rowBytes=outBufferA.rowBytes=rowbytes/4;
-    size_t frameSize = bufferHeight * bufferWidth;
-    vImage_Error error = vImageConvert_BGRA8888toPlanar8(&inBuffer,
-                                                         &outBufferB,
-                                                         &outBufferG,
-                                                         &outBufferR,
-                                                         &outBufferA,
-                                                         kvImageNoFlags);
-    if (error)
-        NSLog(@"error %ld in BRGA to Planar8s", error);
-    else {
-        error = vImageConvert_Planar8toPlanarF(&outBufferR, &planarF, 1.0f, 0.0f, kvImageNoFlags);
-        if (error) {
-            NSLog(@"error %ld in Planar8toF", error);
+    unsigned char *pixelBase = (unsigned char *)CVPixelBufferGetBaseAddress(pixelBuffer);
+    pixelBase += 2; // move to the first red pixel
+    vDSP_vfltu8(pixelBase, 4, arrayOfFrameRedPixels, 1, frameSize);
+    vDSP_meanv(arrayOfFrameRedPixels,1,&(RedAvg),frameSize);
+    NSLog(@"meanR = %f",RedAvg);
+    if (frame_number >= RECORDING_STAGE2 && frame_number < RECORDING_STAGE3) {
+        if (RedAvg < 0.784f && RED_INDEX < NUM_OF_RED_AVERAGE) {
+            NSLog(@"%f too low, failed./n", RedAvg);
+            frame_number = RECORDING_STAGE2;
         }
         else {
-            sumofRed = 0;
-            vDSP_meanv(planarF.data,1,&(RedAvg),frameSize);
-            //RedAvg *= 255.0f;
-            NSLog(@"%f",RedAvg);
-            if (frame_number >= RECORDING_STAGE2 && frame_number < RECORDING_STAGE3) {
-                if (RedAvg < 0.784f && RED_INDEX < NUM_OF_RED_AVERAGE) {
-                    NSLog(@"%f too low, failed./n", RedAvg);
-                    frame_number = RECORDING_STAGE2;
-                }
-                else {
-                    arrayOfRedChannelAverage[RED_INDEX] = RedAvg;
-                }
-            }
+            arrayOfRedChannelAverage[RED_INDEX] = RedAvg;
         }
     }
 	CVPixelBufferUnlockBaseAddress( pixelBuffer, kCVPixelBufferLock_ReadOnly );
 }
 
-- (void)heartRateEstimate
+- (void) heartRateEstimate
 {
 	float min, max;
 	min = arrayOfRedChannelAverage[0];
@@ -611,7 +580,7 @@ long myEmboss(vImage_Buffer *inData,
 	}
 }
 
-int detect_peak(
+int detect_peak (
 				 const float*   data, /* the data */
 				 int             data_count, /* row count of data */
 				 //       int*            emi_peaks, /* emission peaks will be put here */
@@ -691,7 +660,7 @@ int detect_peak(
     return 0;
 }
 
-- (void)createBitmapsfromPixelBuffer: (CVImageBufferRef)pixelBuffer
+- (void) createBitmapsfromPixelBuffer: (CVImageBufferRef) pixelBuffer
 {
 	CVPixelBufferLockBaseAddress( pixelBuffer, 0 );
 	bufferWidth = CVPixelBufferGetWidth(pixelBuffer);
@@ -702,6 +671,7 @@ int detect_peak(
 	// Since the pixel is an unsigned char, the following variables are always ints.
 	// Access pointer. Moving during the loop operation
     unsigned char *pixel = pixelBase;
+    
     // Condition 2: sufficient data is collected, we simulate HR.
 	CGFloat hr_sim = 40.0f * sinf(currentTime * 6.28f * [self heartRate] / 60.0f);
 		// Step 1 and partial 2
@@ -805,6 +775,7 @@ int detect_peak(
 }
 - (void) vImageHelpMeDoWork: (CVImageBufferRef)pixelBuffer
 {
+    // Lock buffer base addr for modification.
 	CVPixelBufferLockBaseAddress( pixelBuffer, 0 );
     void *baseAddress = CVPixelBufferGetBaseAddress(pixelBuffer);
 	bufferWidth = CVPixelBufferGetWidth(pixelBuffer);
@@ -812,7 +783,7 @@ int detect_peak(
     rowbytes = CVPixelBufferGetBytesPerRow(pixelBuffer);
     // Setting up vImage buffers: necessary for vImage to work!
     vImage_Error error;
-    // At baseaddress we have the bitmat data.
+    // At baseaddress we have the bitmap data.
     inBuffer.data = baseAddress;
     outBuffer.data = baseAddress;
     inBuffer.width = bufferWidth;
@@ -822,7 +793,8 @@ int detect_peak(
     inBuffer.rowBytes = rowbytes;
     outBuffer.rowBytes = rowbytes;
     //error = myEmboss(&inBuffer, &outBuffer, kernel_edgeDetection, 3, 3, 1, kvImageNoFlags);
-    if (frame_number > 600) {
+    //vImageConvert_BGRA8888toRGB888(&inBuffer, &someOutBuffer, kvImageNoFlags);
+    if (frame_number > 500) {
         error = vImageEqualization_ARGB8888(&inBuffer, &outBuffer, kvImageNoFlags);
         if (error) {
             NSLog(@"vImage error: %ld", error);
@@ -851,19 +823,9 @@ int detect_peak(
 			self.videoType = CMFormatDescriptionGetMediaSubType( formatDescription );
 		if (frame_number < MAX_NUM_FRAMES) {
 			if (frame_number == RECORDING_STAGE1) { // 10th frame
-                outBufferR.data = malloc(960 * 540);
-                planarF.data = malloc(960 * 540 * 4);
-                outBufferG.data = malloc(960 * 540);
-                outBufferB.data = malloc(960 * 540);
-                outBufferA.data = malloc(960 * 540);
 				[self switchDeviceTorchMode:backCamera];
             }
 			else if (frame_number == RECORDING_STAGE3) { // 340th frame
-                free(outBufferR.data);
-                free(planarF.data);
-                free(outBufferG.data);
-                free(outBufferB.data);
-                free(outBufferA.data);
 				[self switchDeviceTorchMode:backCamera];
 			}
             // 1. Collect average color channel values for HR estimation
@@ -877,8 +839,6 @@ int detect_peak(
 		}
         else {
             if (!isUsingFrontCamera) {
-                float maxRed = 255.0f;
-                vDSP_vsmul(arrayOfRedChannelAverage, 1, &maxRed,arrayOfRedChannelAverage, 1, NUM_OF_RED_AVERAGE);
 				[self heartRateEstimate];
                 [self stopAndTearDownCaptureSession];
                 isUsingFrontCamera = YES;

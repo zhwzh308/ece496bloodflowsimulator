@@ -51,13 +51,15 @@
 	size_t bufferWidth, bufferHeight, rowbytes;
     // For calculating HR.
 	float arrayOfRedChannelAverage[NUM_OF_RED_AVERAGE];
+    float arrayOfFrameRedPixels[518400];
     float *differences;
     unsigned int sizeOfDifferences;
     // Choosing maximum value so that profiles are compatible.
     // iPhone 5s: 1136 x 640, 4/4s 960 x 640.
     // Power of vector calculus...
     // Note: 1. contiguous allocation; 2. 16-byte aligned.
-    vImage_Buffer inBuffer, outBuffer, outBufferR, outBufferG, outBufferB, outBufferA, planarF;
+    vImage_Buffer inBuffer, outBuffer;
+    vImage_Buffer yuvFrame;
     vImage_CGImageFormat vImageformat;
     // Binary bitmaps...
     BOOL tmp[540][960];
