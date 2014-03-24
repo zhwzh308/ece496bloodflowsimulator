@@ -19,17 +19,5 @@ const mediump mat4 yuvToRgb = mat4( 1.164,  1.164,  1.164,  -0.07884,
 // uniform mediump float centre, range;
 void main()
 {
-    // gl_FragColor = fragmentColor;
-	// gl_FragColor = texture2D(videoframe, coordinate);
-    lowp vec4 srcPixel = texture2D(videoframe, coordinate);
-    lowp vec4 yuvPixel = rgbToYuv * srcPixel;
-    lowp vec4 newPixel = vec4(0,0,0,0);
-    //if ( (yuvPixel.g >= 0.302) && (yuvPixel.g <= 0.498) && (yuvPixel.b >= 0.522) && (yuvPixel.b <= 0.678) ) {
-    if ( yuvPixel.r == 0 ){
-        newPixel = srcPixel;
-    }
-    else {
-        newPixel = vec4(0,0,0,1);
-    }
-    gl_FragColor = newPixel;
+    gl_FragColor = texture2D(videoframe, coordinate);
 }

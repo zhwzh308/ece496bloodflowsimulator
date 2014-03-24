@@ -40,32 +40,32 @@
     
 	AVCaptureVideoOrientation referenceOrientation;
 	AVCaptureVideoOrientation videoOrientation;
-    CGFloat previousFrameAverageGreen0;
-    CGFloat previousFrameAverageGreen1;
     
-    /* Added by team */
-    int frame_number;
+    /* Added by team, use frame_number to track how many frames elapsed so far. */
+    unsigned int frame_number;
+    // Timing information, for the use of color.
     CGFloat currentTime;
-	size_t bufferWidth;
-    size_t bufferHeight;
-    int *differences;
-    int sizeOfDifferences;
-    int sizeOfCollectedData;
-    BOOL isUsingFrontCamera;
-	double arrayOfRedChannelAverage[NUM_OF_RED_AVERAGE];
+    float RedAvg;
+    size_t sumofRed;
+    // Frame sizing parameter.
+	size_t bufferWidth, bufferHeight, rowbytes;
+    // For calculating HR.
+	float arrayOfRedChannelAverage[NUM_OF_RED_AVERAGE];
+    float *differences;
+    unsigned int sizeOfDifferences;
     // Choosing maximum value so that profiles are compatible.
     // iPhone 5s: 1136 x 640, 4/4s 960 x 640.
+    // Power of vector calculus...
+    // Note: 1. contiguous allocation; 2. 16-byte aligned.
+    vImage_Buffer inBuffer, outBuffer, outBufferR, outBufferG, outBufferB, outBufferA, planarF;
+    vImage_CGImageFormat vImageformat;
+    // Binary bitmaps...
     BOOL tmp[540][960];
     BOOL tmp2[540][960];
     BOOL lesstemp[135][240];
     CGFloat tmpY[540][960];
     
-	// Only accessed on movie writing queue
-    BOOL readyToRecordAudio; 
-    BOOL readyToRecordVideo;
-	BOOL recordingWillBeStarted;
-	BOOL recordingWillBeStopped;
-
+    BOOL isUsingFrontCamera, readyToRecordAudio, readyToRecordVideo, recordingWillBeStarted, recordingWillBeStopped;
 	BOOL recording;
 }
 
@@ -92,7 +92,7 @@
 - (void) pauseCaptureSession; // Pausing while a recording is in progress will cause the recording to be stopped and saved.
 - (void) resumeCaptureSession;
 int detect_peak(
-				const double*   data, /* the data */
+				const float*   data, /* the data */
 				int             data_count, /* row count of data */
 				//       int*            emi_peaks, /* emission peaks will be put here */
 				int*            num_emi_peaks, /* number of emission peaks found */
@@ -101,12 +101,21 @@ int detect_peak(
 				int*            num_absop_peaks, /* number of absorption peaks found */
 				int             max_absop_peaks, /* maximum number of absorption peaks
 												  */
-				double          delta,//, /* delta used for distinguishing peaks */
+				float          delta,//, /* delta used for distinguishing peaks */
 				//       int             emi_first /* should we search emission peak first of
 				//                                  absorption peak first? */
 				int*         peaks_index,
-				double*         peaks_values
+				float*         peaks_values
 				);
+
+long myEmboss(vImage_Buffer *inData,
+              vImage_Buffer *outData,
+              const void *kernel,
+              unsigned int kernel_height,
+              unsigned int kernel_width,
+              int divisor ,
+              vImage_Flags flags
+              );
 
 @property(readonly, getter=isRecording) BOOL recording;
 

@@ -8,6 +8,22 @@
 #define WG 0.587
 #define WB 0.114
 
+// Typical initializer.
+vImage_CGImageFormat vImageformat = {
+    .bitsPerComponent = 8,
+    .bitsPerPixel = 32,
+    .colorSpace = NULL,
+    .bitmapInfo = kCGImageAlphaFirst,
+    .version = 0,
+    .decode = NULL,
+    .renderingIntent = kCGRenderingIntentDefault,
+};
+
+// Static kernel
+//static const signed int kernel_emboss[] = {-2, -2, 0, -2, 6, 0, 0, 0, 0};
+//static const signed int kernel_Gaussianblur[] = {1,2,1,2,4,2,1,2,1};
+//static const signed int kernel_edgeDetection[] = {-1,-1,-1,0,0,0,1,1,1};
+
 @interface RosyWriterVideoProcessor ()
 
 // Redeclared as readwrite so that we can write to the property and still be atomic with external readers.
@@ -39,8 +55,6 @@
         // The temporary path for the video before saving it to the photo album
         movieURL = [NSURL fileURLWithPath:[NSString stringWithFormat:@"%@%@", NSTemporaryDirectory(), @"ECE496.MOV"]];
         [movieURL retain];
-        previousFrameAverageGreen0 = 0.0f;
-        previousFrameAverageGreen1 = previousFrameAverageGreen0;
         frame_number = 0;
         isUsingFrontCamera = NO;
 		_heartRate=0.0f;
@@ -48,6 +62,32 @@
 		backCamera = nil;
     }
     return self;
+}
+
+long myEmboss(vImage_Buffer *inData,
+             vImage_Buffer *outData,
+             const void *kernel,
+             unsigned int kernel_height,
+             unsigned int kernel_width,
+             int divisor ,
+             vImage_Flags flags )
+{
+    unsigned char bgColor[4] = { 0, 0, 0, 0 }; // 4
+    
+    vImage_Error err = vImageConvolve_ARGB8888(inData,     //const vImage_Buffer *src,
+                                  outData,    //const vImage_Buffer *dest,
+                                  NULL,
+                                  0,    //unsigned int srcOffsetToROI_X,
+                                  0,    //unsigned int srcOffsetToROI_Y,
+                                  kernel,    //const signed int *kernel,
+                                  kernel_height,     //unsigned int
+                                  kernel_width,    //unsigned int
+                                  divisor,    //int
+                                  bgColor,
+                                  flags | kvImageBackgroundColorFill
+                                  );
+    
+    return err;
 }
 
 - (void)dealloc
@@ -82,6 +122,11 @@
 
 	tmp[row][col] = (Cb >= 77.0f && Cb <= 127.0f && Cr >= 133.0f && Cr <= 173.0f);
     tmpY[row][col] = Y;
+}
+
+- (void) step1_YCbCrThresholding:(float *)yCbCrPixel
+{
+    yCbCrPixel;
 }
 
 - (void) step1_pixelFromRGB:(unsigned char *)p row:(int)row column:(int) col
@@ -434,88 +479,89 @@
 }
 
 #pragma mark Processing
+
 - (void)fillInArray: (CVImageBufferRef)pixelBuffer
 {
-	CVPixelBufferLockBaseAddress( pixelBuffer, 0 );
+	CVPixelBufferLockBaseAddress( pixelBuffer, kCVPixelBufferLock_ReadOnly );
 	bufferWidth = CVPixelBufferGetWidth(pixelBuffer);
     bufferHeight = CVPixelBufferGetHeight(pixelBuffer);
 	// Total number of pixels.
-	unsigned char *pixelBase = (unsigned char *)CVPixelBufferGetBaseAddress(pixelBuffer);
-	
+    inBuffer.data = (unsigned char *)CVPixelBufferGetBaseAddress(pixelBuffer);
 	// Since the pixel is an unsigned char, the following variables are always ints.
 	// Access pointer. Moving during the loop operation
-    unsigned char *pixel = pixelBase;
-    uint32_t sumOfRed = 0;
-    for (int row = 0; row < bufferHeight; row++) {
-        for (int col = 0; col < bufferWidth; col++) {
-            // Cb = 128.0f - me - (0.331264f * pixel[1]) + (pixel[0] / 2.0f);
-            sumOfRed += pixel[2];
-            pixel += BYTES_PER_PIXEL;
+    planarF.height = inBuffer.height = outBufferR.height = outBufferG.height = outBufferB.height = outBufferA.height = bufferHeight;
+    planarF.width = inBuffer.width=outBufferR.width=outBufferG.width=outBufferB.width=outBufferA.width = bufferWidth;
+    rowbytes = CVPixelBufferGetBytesPerRow(pixelBuffer);
+    planarF.rowBytes = inBuffer.rowBytes = rowbytes;
+    outBufferR.rowBytes=outBufferG.rowBytes=outBufferB.rowBytes=outBufferA.rowBytes=rowbytes/4;
+    size_t frameSize = bufferHeight * bufferWidth;
+    vImage_Error error = vImageConvert_BGRA8888toPlanar8(&inBuffer,
+                                                         &outBufferB,
+                                                         &outBufferG,
+                                                         &outBufferR,
+                                                         &outBufferA,
+                                                         kvImageNoFlags);
+    if (error)
+        NSLog(@"error %ld in BRGA to Planar8s", error);
+    else {
+        error = vImageConvert_Planar8toPlanarF(&outBufferR, &planarF, 1.0f, 0.0f, kvImageNoFlags);
+        if (error) {
+            NSLog(@"error %ld in Planar8toF", error);
         }
-        pixel += BYTES_PER_PIXEL;
-    }
-    double RedAvg = ((double) sumOfRed) / (bufferHeight * bufferWidth);
-    NSLog(@"frame = %d, RedAvg = %f\n", RED_INDEX, RedAvg);
-    if (frame_number >= RECORDING_STAGE2 && frame_number < RECORDING_STAGE3) {
-        if (RedAvg < 200.0f && RED_INDEX < NUM_OF_RED_AVERAGE) {
-            NSLog(@"failed./n");
-            frame_number = RECORDING_STAGE2;
+        else {
+            sumofRed = 0;
+            vDSP_meanv(planarF.data,1,&(RedAvg),frameSize);
+            //RedAvg *= 255.0f;
+            NSLog(@"%f",RedAvg);
+            if (frame_number >= RECORDING_STAGE2 && frame_number < RECORDING_STAGE3) {
+                if (RedAvg < 0.784f && RED_INDEX < NUM_OF_RED_AVERAGE) {
+                    NSLog(@"%f too low, failed./n", RedAvg);
+                    frame_number = RECORDING_STAGE2;
+                }
+                else {
+                    arrayOfRedChannelAverage[RED_INDEX] = RedAvg;
+                }
+            }
         }
-        arrayOfRedChannelAverage[RED_INDEX] = RedAvg;
     }
-	CVPixelBufferUnlockBaseAddress( pixelBuffer, 0 );
+	CVPixelBufferUnlockBaseAddress( pixelBuffer, kCVPixelBufferLock_ReadOnly );
 }
 
 - (void)heartRateEstimate
 {
-	double min, max;
+	float min, max;
 	min = arrayOfRedChannelAverage[0];
 	max = min;
-	for (int i = 0; i < frame_number; ++i){
+	for (int i = 0; i < NUM_OF_RED_AVERAGE; ++i){
 		if (arrayOfRedChannelAverage[i] < min)
 			min = arrayOfRedChannelAverage[i];
 		else if (arrayOfRedChannelAverage[i] > max)
 			max = arrayOfRedChannelAverage[i];
 	}
+    printf("%f, %f\n",min,max);
 	int num_emi_peaks, num_absop_peaks = 0;
 	int max_emi_peaks = 500, max_absop_peaks = 500;
-	double delta = 0.05;
+	float delta = 0.05f;
 	int minHR = 24;
 	int maxHR = 240;
-	/*
-	int WINDOW_LENGTH = 0;
-	if (frame_number > 255)
-		WINDOW_LENGTH = 7;
-	else if (frame_number > 150)
-		WINDOW_LENGTH = 3;
-	else if (frame_number > 90)
-		WINDOW_LENGTH = 1;
-	else
-		WINDOW_LENGTH = 1;
-	*/
-	//[self movingAverage:WINDOW_LENGTH];
 	
-	int* peak_indices = (int*) malloc(sizeof(int)*max_emi_peaks);
-	memset (peak_indices,0,sizeof(int)*max_emi_peaks);
-	
-	double* peak_values = (double*)malloc(sizeof(double)*max_emi_peaks);
-	memset (peak_values,0,sizeof(double)*max_emi_peaks);
-	// detect_peak
-	if (!detect_peak(arrayOfRedChannelAverage, frame_number, &num_emi_peaks, max_emi_peaks, &num_absop_peaks, max_absop_peaks, delta, peak_indices, peak_values)) {
+	int* peak_indices = (int*) malloc(sizeof(int) * max_emi_peaks);
+	float* peak_values = (float *) malloc(sizeof(float) * max_emi_peaks);
+	memset (peak_indices, 0, sizeof(int) * max_emi_peaks);
+	memset (peak_values, 0, sizeof(float) * max_emi_peaks);
+    
+	if (!detect_peak(arrayOfRedChannelAverage, NUM_OF_RED_AVERAGE, &num_emi_peaks, max_emi_peaks, &num_absop_peaks, max_absop_peaks, delta, peak_indices, peak_values)) {
 		NSLog(@"num_emi_peaks = %d\n",num_emi_peaks);
 		NSLog(@"num_absop_peaks = %d\n",num_absop_peaks);
 		if (num_emi_peaks > 2){
-			
 			if (differences != nil){
 				free(differences);
 				differences = NULL;
 			}
-			
-			differences = (int *) malloc(sizeof(int)*(num_emi_peaks-1));
-			memset(differences,0,sizeof(int)*(num_emi_peaks-1));
+			differences = (float *) malloc(sizeof(float) * (num_emi_peaks - 1));
+			memset(differences, 0, sizeof(float) * (num_emi_peaks - 1));
 			sizeOfDifferences = num_emi_peaks - 1;
-			sizeOfCollectedData = frame_number;
-			for (int i = 0; i < num_emi_peaks-1;++i){
+			for (int i = 0; i < sizeOfDifferences;++i){
 				if (peak_values[i] < 255){ // it's counting mx = MAXDBL as a max
 					
 					// calculate the difference
@@ -524,9 +570,9 @@
 					// If that difference isn't within range, set the difference to 0
 					// This must be interpreted by later code as being NULL
 					
-					if (60 * frame_number/(10.0f*differences[i]) < minHR
+					if (60 * NUM_OF_RED_AVERAGE / (10.0f * differences[i]) < minHR
 						||
-						60 * frame_number/(10.0f*differences[i]) > maxHR){
+						60 * NUM_OF_RED_AVERAGE / (10.0f * differences[i]) > maxHR){
 						differences[i] = 0;
 					}
 				}
@@ -535,71 +581,63 @@
 					differences[i] = 0;
 				}
 				// print the calculated differences, for easier debugging!
-				printf("%d - %d = %d\n", peak_indices[i+1], peak_indices[i], differences[i]);
+				printf("%d - %d = %f\n", peak_indices[i+1], peak_indices[i], differences[i]);
 			}
 			
 			//Sometimes the last one shows a false peak.
 			// Calculate the average without it.
 			// If it is more than 5 away from the average, don't count it.
-			double tempSum = 0;
-			for (int i = 0; i<num_emi_peaks-2;++i){
+			float tempSum = 0.0f;
+			for (int i = 0; i < num_emi_peaks - 2;++i){
 				tempSum += differences[i];
 			}
-			double tempAvg = tempSum/(num_emi_peaks-2);
+			double tempAvg = tempSum / (num_emi_peaks-2);
 			if (tempAvg - differences[num_emi_peaks-2] > 5){
-				differences[num_emi_peaks-2] = 0;
+				differences[num_emi_peaks-2] = 0.0f;
 			}
 			
-			double sum = 0;
-			int numSums = 0;
+			float sum = 0;
+			unsigned int numSums = 0;
 			
 			for (int i = 0; i < num_emi_peaks-1; ++i){
 				if (differences[i] != 0){
-					sum = sum + differences[i];
-					numSums = numSums + 1;
+					sum += differences[i];
+					++numSums;
 				}
 			}
-			_heartRate = 60 * NUM_OF_RED_AVERAGE / (10 * sum/numSums) * 0.75f;
+			_heartRate = 60.0f * NUM_OF_RED_AVERAGE / (10.0f * sum / numSums) * 0.75f;
 			NSLog(@"Heart rate measured is %f", _heartRate);
 		}
 	}
 }
 
 int detect_peak(
-				 const double*   data, /* the data */
+				 const float*   data, /* the data */
 				 int             data_count, /* row count of data */
 				 //       int*            emi_peaks, /* emission peaks will be put here */
 				 int*            num_emi_peaks, /* number of emission peaks found */
 				 int             max_emi_peaks, /* maximum number of emission peaks */
 				 //       int*            absop_peaks, /* absorption peaks will be put here */
 				 int*            num_absop_peaks, /* number of absorption peaks found */
-				 int             max_absop_peaks, /* maximum number of absorption peaks
-												   */
-				 double          delta,//, /* delta used for distinguishing peaks */
+				 int             max_absop_peaks, /* maximum number of absorption peaks */
+				 float          delta, /* delta used for distinguishing peaks */
 				 //       int             emi_first /* should we search emission peak first of
 				 //                                  absorption peak first? */
 				 int*         peaks_index,
-				 double*         peaks_values
-				 )
-{
-    int     i = 1;
-    double  mx;
-    double  mn;
+				 float*         peaks_values
+				 ) {
+    int i = 1;
+    int j = 0;
+    float  mx, mn;
     int     mx_pos = 0;
     int     mn_pos = 0;
     int     is_detecting_emi = 0;// = emi_first;
-    
-    
-    //mn = DBL_MAX;
-    //mx = -DBL_MAX;
     
     mx = data[0];
     mn = data[0];
     
     *num_emi_peaks = 0;
     *num_absop_peaks = 0;
-    
-    int j = 0;
     
     if (data[i+1] > data[i])
         is_detecting_emi = 1;
@@ -617,13 +655,11 @@ int detect_peak(
             mn = data[i];
         }
         
-        if(is_detecting_emi &&
-           data[i] < mx - delta)
+        if(is_detecting_emi && data[i] < mx - delta)
         {
             if(*num_emi_peaks >= max_emi_peaks) /* not enough spaces */
                 return 1;
             
-            //      emi_peaks[*num_emi_peaks] = mx_pos;
             ++ (*num_emi_peaks);
             
             is_detecting_emi = 0;
@@ -637,13 +673,10 @@ int detect_peak(
             mn = data[mx_pos];
             mn_pos = mx_pos;
         }
-        else if((!is_detecting_emi) &&
-                data[i] > mn + delta)
-        {
+        else if((!is_detecting_emi) && data[i] > mn + delta) {
             if(*num_absop_peaks >= max_absop_peaks)
                 return 2;
             
-            //     absop_peaks[*num_absop_peaks] = mn_pos;
             ++ (*num_absop_peaks);
             
             is_detecting_emi = 1;
@@ -739,23 +772,7 @@ int detect_peak(
     for (int row = 0; row < bufferHeight; row++) {
         for (int col = 0; col < bufferWidth; col++) {
             if (lesstemp[row/4][col/4]) {
- //           if (!((!lesstemp[row/4][col/4]) || tmp2[row][col])) {
-              /*  CGFloat to_color = ((float) pixel[2]) + hr_sim;
-                if (to_color >= 255.0f) {
-                    pixel[2] = 255;
-                } else if (to_color <= 0.0f){
-                    pixel[2] = 0;
-                }
-                else {
-                    pixel[2] = 0;
-                    pixel[1] = 0;
-                    pixel[0] = 0;
-                }*/
                 tmp[row][col] = 1;
-//                pixel[2] = 0;
-//                pixel[1] = 0;
-//                pixel[0] = 0;
-//                    pixel[2] = (unsigned char) to_color;
             }
             pixel += BYTES_PER_PIXEL;
         }
@@ -786,7 +803,33 @@ int detect_peak(
     }
 	CVPixelBufferUnlockBaseAddress( pixelBuffer, 0 );
 }
-
+- (void) vImageHelpMeDoWork: (CVImageBufferRef)pixelBuffer
+{
+	CVPixelBufferLockBaseAddress( pixelBuffer, 0 );
+    void *baseAddress = CVPixelBufferGetBaseAddress(pixelBuffer);
+	bufferWidth = CVPixelBufferGetWidth(pixelBuffer);
+    bufferHeight = CVPixelBufferGetHeight(pixelBuffer);
+    rowbytes = CVPixelBufferGetBytesPerRow(pixelBuffer);
+    // Setting up vImage buffers: necessary for vImage to work!
+    vImage_Error error;
+    // At baseaddress we have the bitmat data.
+    inBuffer.data = baseAddress;
+    outBuffer.data = baseAddress;
+    inBuffer.width = bufferWidth;
+    outBuffer.width = bufferWidth;
+    inBuffer.height = bufferHeight;
+    outBuffer.height = bufferHeight;
+    inBuffer.rowBytes = rowbytes;
+    outBuffer.rowBytes = rowbytes;
+    //error = myEmboss(&inBuffer, &outBuffer, kernel_edgeDetection, 3, 3, 1, kvImageNoFlags);
+    if (frame_number > 600) {
+        error = vImageEqualization_ARGB8888(&inBuffer, &outBuffer, kvImageNoFlags);
+        if (error) {
+            NSLog(@"vImage error: %ld", error);
+        }
+    }
+    CVPixelBufferUnlockBaseAddress( pixelBuffer, 0 );
+}
 #pragma mark Capture
 
 - (void)captureOutput:(AVCaptureOutput *)captureOutput didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer fromConnection:(AVCaptureConnection *)connection
@@ -807,9 +850,20 @@ int detect_peak(
 		if ( self.videoType == 0 )
 			self.videoType = CMFormatDescriptionGetMediaSubType( formatDescription );
 		if (frame_number < MAX_NUM_FRAMES) {
-			if (frame_number == RECORDING_STAGE1) // 10th frame
+			if (frame_number == RECORDING_STAGE1) { // 10th frame
+                outBufferR.data = malloc(960 * 540);
+                planarF.data = malloc(960 * 540 * 4);
+                outBufferG.data = malloc(960 * 540);
+                outBufferB.data = malloc(960 * 540);
+                outBufferA.data = malloc(960 * 540);
 				[self switchDeviceTorchMode:backCamera];
+            }
 			else if (frame_number == RECORDING_STAGE3) { // 340th frame
+                free(outBufferR.data);
+                free(planarF.data);
+                free(outBufferG.data);
+                free(outBufferB.data);
+                free(outBufferA.data);
 				[self switchDeviceTorchMode:backCamera];
 			}
             // 1. Collect average color channel values for HR estimation
@@ -819,10 +873,12 @@ int detect_peak(
                 // Fill 300 datapoints
                 [self fillInArray:CMSampleBufferGetImageBuffer(sampleBuffer)];
             }
-            frame_number++;
+            ++frame_number;
 		}
         else {
             if (!isUsingFrontCamera) {
+                float maxRed = 255.0f;
+                vDSP_vsmul(arrayOfRedChannelAverage, 1, &maxRed,arrayOfRedChannelAverage, 1, NUM_OF_RED_AVERAGE);
 				[self heartRateEstimate];
                 [self stopAndTearDownCaptureSession];
                 isUsingFrontCamera = YES;
@@ -830,7 +886,9 @@ int detect_peak(
             }
             else {
                 //[self createBitmapsfromPixelBuffer:CMSampleBufferGetImageBuffer(sampleBuffer)];
+                [self vImageHelpMeDoWork:CMSampleBufferGetImageBuffer(sampleBuffer)];
             }
+            ++frame_number;
         }
 		 
 		// Enqueue it for preview.  This is a shallow queue, so if image processing is taking too long,
