@@ -11,11 +11,13 @@
 // Static kernel for image convolution.
 //static const signed int kernel_emboss[] = {-2, -2, 0, -2, 6, 0, 0, 0, 0};
 //static const signed int kernel_Gaussianblur[] = {1,2,1,2,4,2,1,2,1};
-//static const signed int kernel_edgeDetection[] = {-1,-1,-1,0,0,0,1,1,1};
+
 const float rgbToYuv[] ={ 0.257,  0.439,  -0.148, 0.06,
     0.504, -0.368,  -0.291, 0.5,
     0.098, -0.071,   0.439, 0.5,
     0.0,     0.0,     0.0, 1.0 };
+
+//static const float kernel_edgeDetection[9] = {-1, -1, -1, -1, 9, -1, -1, -1, -1};
 @interface RosyWriterVideoProcessor ()
 
 // Redeclared as readwrite so that we can write to the property and still be atomic with external readers.
@@ -49,37 +51,14 @@ const float rgbToYuv[] ={ 0.257,  0.439,  -0.148, 0.06,
         [movieURL retain];
         frame_number = 0;
         isUsingFrontCamera = NO;
-		_heartRate=0.0f;
-		frontCamera = nil;
-		backCamera = nil;
+
+        _heartRate=0.0f;
+
+        frontCamera = nil;
+
+        backCamera = nil;
     }
     return self;
-}
-
-long myEmboss(vImage_Buffer *inData,
-             vImage_Buffer *outData,
-             const void *kernel,
-             unsigned int kernel_height,
-             unsigned int kernel_width,
-             int divisor ,
-             vImage_Flags flags )
-{
-    unsigned char bgColor[4] = { 0, 0, 0, 0 }; // 4
-    
-    vImage_Error err = vImageConvolve_ARGB8888(inData,     //const vImage_Buffer *src,
-                                  outData,    //const vImage_Buffer *dest,
-                                  NULL,
-                                  0,    //unsigned int srcOffsetToROI_X,
-                                  0,    //unsigned int srcOffsetToROI_Y,
-                                  kernel,    //const signed int *kernel,
-                                  kernel_height,     //unsigned int
-                                  kernel_width,    //unsigned int
-                                  divisor,    //int
-                                  bgColor,
-                                  flags | kvImageBackgroundColorFill
-                                  );
-    
-    return err;
 }
 
 - (void)dealloc
@@ -116,9 +95,20 @@ long myEmboss(vImage_Buffer *inData,
     tmpY[row][col] = Y;
 }
 
-- (void) step1_YCbCrThresholding:(float *)yCbCrPixel
+- (void) step1_YCbCrThresholding:(CVPixelBufferRef)yCbCrPixel
 {
-    yCbCrPixel;
+	CVPixelBufferLockBaseAddress( yCbCrPixel, kCVPixelBufferLock_ReadOnly );
+    unsigned char *pixel = CVPixelBufferGetBaseAddress(yCbCrPixel);
+    for (int i = 0; i<inBuffer.height; ++i) {
+        for (int j = 0; j<inBuffer.width; ++j) {
+            //tmp[i][j]=(pixel[2] >= 77 && pixel[2] <= 127 && pixel[0] >= 133 && pixel[0] <= 173);
+            tmp[i][j]=(pixel[0] >= 77 && pixel[0] <= 127 && pixel[2] >= 133 && pixel[2] <= 173);
+            pixel += BYTES_PER_PIXEL;
+        }
+        pixel += BYTES_PER_PIXEL;
+    }
+    //NSLog(@"Buffer bytesPerRow is %zu", CVPixelBufferGetBytesPerRow(yCbCrPixel));
+	CVPixelBufferUnlockBaseAddress( yCbCrPixel, kCVPixelBufferLock_ReadOnly );
 }
 
 - (void) step1_pixelFromRGB:(unsigned char *)p row:(int)row column:(int) col
@@ -508,6 +498,315 @@ long myEmboss(vImage_Buffer *inData,
 	CVPixelBufferUnlockBaseAddress( pixelBuffer, kCVPixelBufferLock_ReadOnly );
 }
 
+- (void) createBitmapsfromPixelBuffer: (CVImageBufferRef) pixelBuffer
+{
+	CVPixelBufferLockBaseAddress( pixelBuffer, 0 );
+	bufferWidth = CVPixelBufferGetWidth(pixelBuffer);
+    bufferHeight = CVPixelBufferGetHeight(pixelBuffer);
+    
+	unsigned char *pixelBase = (unsigned char *)CVPixelBufferGetBaseAddress(pixelBuffer);
+
+    inBuffer.data = outBuffer.data = pixelBase;
+    inBuffer.width = outBuffer.width = CVPixelBufferGetWidth(pixelBuffer);
+    inBuffer.height = outBuffer.height = CVPixelBufferGetHeight(pixelBuffer);
+    inBuffer.rowBytes = outBuffer.rowBytes = CVPixelBufferGetBytesPerRow(pixelBuffer);
+
+	// Since the pixel is an unsigned char, the following variables are always ints.
+	// Access pointer. Moving during the loop operation
+    unsigned char *pixel = pixelBase;
+    
+    // Condition 2: sufficient data is collected, we simulate HR.
+	CGFloat hr_sim = 40.0f * sinf(currentTime * 6.28f * [self heartRate] / 60.0f);
+		// Step 1 and partial 2
+    for (int row = 0; row < inBuffer.height; row++) {
+        for (int col = 0; col < inBuffer.width; col++) {
+            // Step 1. Chrominance threshold, large bitmap
+            [self step1_pixelFromRGBtoYCbCr:pixel row:row column:col];
+//			[self step1_pixelFromRGB:pixel row:row column:col];
+			// Step 2. Set low res bitmap
+            
+            if ( !( ((row+1) % 4) || ((col+1) % 4) ) ) {
+					// that is, on row 3, 7, 11, etc
+					// after col 3, 7, 11, etc inclusive
+					
+					// 1. Roll back and work on sum.
+                int sum = tmp[row-3][col-3] + tmp[row-3][col-2] + tmp[row-3][col-1] + tmp[row-3][col];
+					sum += tmp[row-2][col-3] + tmp[row-2][col-2] + tmp[row-2][col-1] + tmp[row-2][col];
+					sum += tmp[row-1][col-3] + tmp[row-1][col-2] + tmp[row-1][col-1] + tmp[row-1][col];
+					sum += tmp[row][col-3] + tmp[row][col-2] + tmp[row][col-1] + tmp[row][col];
+                    //calculate sume of Y
+                if (sum < 16)
+                    lesstemp[row/4][col/4] = 0;
+                else {
+                    CGFloat sumY = tmpY[row-3][col-3] + tmpY[row-3][col-2] + tmpY[row-3][col-1] + tmpY[row-3][col];
+                    sumY += tmpY[row-2][col-3] + tmpY[row-2][col-2] + tmpY[row-2][col-1] + tmpY[row-2][col];
+                    sumY += tmpY[row-1][col-3] + tmpY[row-1][col-2] + tmpY[row-1][col-1] + tmpY[row-1][col];
+                    sumY += tmpY[row][col-3] + tmpY[row][col-2] + tmpY[row][col-1] + tmpY[row][col];
+                    sumY = sumY * 0.0625f;
+                    CGFloat devSumY = (tmpY[row-3][col-3] - sumY) * (tmpY[row-3][col-3] - sumY);
+                    devSumY += (tmpY[row-3][col-2] - sumY) * (tmpY[row-3][col-2] - sumY);
+                    devSumY += (tmpY[row-3][col-1] - sumY) * (tmpY[row-3][col-1] - sumY);
+                    devSumY += (tmpY[row-3][col-0] - sumY) * (tmpY[row-3][col-0] - sumY);
+                    
+                    devSumY += (tmpY[row-2][col-3] - sumY) * (tmpY[row-2][col-3] - sumY);
+                    devSumY += (tmpY[row-2][col-2] - sumY) * (tmpY[row-2][col-2] - sumY);
+                    devSumY += (tmpY[row-2][col-1] - sumY) * (tmpY[row-2][col-1] - sumY);
+                    devSumY += (tmpY[row-2][col-0] - sumY) * (tmpY[row-2][col-0] - sumY);
+                    
+                    devSumY += (tmpY[row-1][col-3] - sumY) * (tmpY[row-1][col-3] - sumY);
+                    devSumY += (tmpY[row-1][col-2] - sumY) * (tmpY[row-1][col-2] - sumY);
+                    devSumY += (tmpY[row-1][col-1] - sumY) * (tmpY[row-1][col-1] - sumY);
+                    devSumY += (tmpY[row-1][col-0] - sumY) * (tmpY[row-1][col-0] - sumY);
+                    
+                    devSumY += (tmpY[row][col-3] - sumY) * (tmpY[row][col-3] - sumY);
+                    devSumY += (tmpY[row][col-2] - sumY) * (tmpY[row][col-2] - sumY);
+                    devSumY += (tmpY[row][col-1] - sumY) * (tmpY[row][col-1] - sumY);
+                    devSumY += (tmpY[row][col-0] - sumY) * (tmpY[row][col-0] - sumY);
+                    if (devSumY < 64.0f)
+                        // The skin area should be:
+                        // a. Step 2: sum of the 4 by 4 block equal to 16;
+                        // b. standard deviation of the 4 by 4 block greater than 2.
+                    
+						// Optimized: this should still work because
+						// 3/4 = 0, 7/4 = 1, ..., 956/4 = 239 in int arithmatic.
+                        lesstemp[row/4][col/4] = 0;
+                    else {
+                        lesstemp[row/4][col/4] = 1;
+                    }
+                }// 2. Return to reality
+			}
+            
+			pixel += BYTES_PER_PIXEL;
+		}
+		pixel += BYTES_PER_PIXEL;
+	}
+    pixel = pixelBase;
+    
+    for (int row = 0; row < bufferHeight; row++) {
+        for (int col = 0; col < bufferWidth; col++) {
+            if (lesstemp[row/4][col/4]) {
+                tmp[row][col] = 1;
+            }
+            pixel += BYTES_PER_PIXEL;
+        }
+        pixel += BYTES_PER_PIXEL;
+    }
+    
+    // Render loop
+    pixel = pixelBase;
+    for (int row = 0; row < bufferHeight; row++) {
+        for (int col = 0; col < bufferWidth; col++) {
+            //           if ((tmp[row][col])) {
+            if (tmp[row][col]) {
+                
+                CGFloat to_color = ((float) pixel[2]) + hr_sim;
+                if (to_color >= 255.0f) {
+                    pixel[2] = 255;
+                } else if (to_color <= 0.0f){
+                    pixel[2] = 0;
+                }
+                else {
+                    pixel[2] = (unsigned char) to_color;
+                }
+                // Use these to check mask: (int) *pixel = (int) 255; // watch out endian
+            }
+            pixel += BYTES_PER_PIXEL;
+        }
+        pixel += BYTES_PER_PIXEL;
+    }
+	CVPixelBufferUnlockBaseAddress( pixelBuffer, 0 );
+}
+
+- (void) vImageHelpMeDoWork: (CVImageBufferRef)pixelBuffer
+{
+    // Lock buffer base addr for modification.
+	CVPixelBufferLockBaseAddress( pixelBuffer, 0 );
+    void *baseAddress = CVPixelBufferGetBaseAddress(pixelBuffer);
+    // Setting up vImage buffers: necessary for vImage to work!
+    vImage_Error error;
+    // At baseaddress we have the bitmap data.
+    inBuffer.data = baseAddress;
+    outBuffer.data = baseAddress;
+    inBuffer.width = outBuffer.width = CVPixelBufferGetWidth(pixelBuffer);
+
+    inBuffer.height = outBuffer.height = CVPixelBufferGetHeight(pixelBuffer);
+    inBuffer.rowBytes = outBuffer.rowBytes = CVPixelBufferGetBytesPerRow(pixelBuffer);
+    //uint8_t bgcolor[4] = {0,0,0,0};
+    //error = vImageRotate_ARGB8888(&inBuffer, &outBuffer, NULL, M_PI_4, bgcolor, kvImageNoFlags);
+    error = vImageVerticalReflect_ARGB8888(&inBuffer, &outBuffer, kvImageNoFlags);
+    if (error)
+        NSLog(@"vImage error: %ld", error);
+    else {
+        //error = vImageEqualization_ARGB8888(&inBuffer, &outBuffer, kvImageNoFlags);
+        
+        //Component Y'CbCr 8-bit 4:4:4.
+        CVReturn myBufferCreation = CVPixelBufferCreateWithBytes(NULL, inBuffer.width,
+                                                                 inBuffer.height,
+                                                                 //kCVPixelFormatType_444YpCbCr8,
+                                                                 kCVPixelFormatType_4444YpCbCrA8,
+                                                                 baseAddress,
+                                                                 inBuffer.rowBytes,
+                                                                 NULL, NULL, NULL,
+                                                                 &yuvBufferRef);
+        if (myBufferCreation) {
+            NSLog(@"pixelBuffer creation error %d", myBufferCreation);
+        }
+        [self step1_YCbCrThresholding:yuvBufferRef];
+        // Render loop
+        CGFloat hr_sim = 40.0f * sinf(currentTime * 6.28f * [self heartRate] / 60.0f);
+        if (yuvBufferRef != NULL) {
+            CFRelease(yuvBufferRef);
+        }
+        
+        unsigned char *pixel = baseAddress;
+        for (int row = 0; row < inBuffer.height; row++) {
+            for (int col = 0; col < inBuffer.width; col++) {
+                if (tmp[row][col]) {
+                    // Simply turn off pixels
+                    // pixel[0]=pixel[1]=pixel[2]=0;
+                    /* Lasy  calculation: only when the condition is matched. */
+                    CGFloat to_color = ((float) pixel[2]) + hr_sim;
+                    if (to_color >= 255.0f) {
+                        pixel[2] = 255;
+                    } else if (to_color <= 0.0f){
+                        pixel[2] = 0;
+                    }
+                    else {
+                        pixel[2] = (unsigned char) to_color;
+                    }
+                }
+                pixel += BYTES_PER_PIXEL;
+            }
+            pixel += BYTES_PER_PIXEL;
+        }
+    }
+    CVPixelBufferUnlockBaseAddress( pixelBuffer, 0 );
+}
+#pragma mark Capture
+
+- (void)captureOutput:(AVCaptureOutput *)captureOutput didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer fromConnection:(AVCaptureConnection *)connection
+{
+	CMFormatDescriptionRef formatDescription = CMSampleBufferGetFormatDescription(sampleBuffer);
+    
+	if ( connection == videoConnection ) {
+		
+		// Get framerate
+		CMTime timestamp = CMSampleBufferGetPresentationTimeStamp( sampleBuffer );
+		[self calculateFramerateAtTimestamp:timestamp];
+        currentTime = CMTimeGetSeconds(timestamp);
+		// Get frame dimensions (for onscreen display)
+		if (self.videoDimensions.width == 0 && self.videoDimensions.height == 0)
+			self.videoDimensions = CMVideoFormatDescriptionGetDimensions( formatDescription );
+		
+		// Get buffer type
+		if ( self.videoType == 0 )
+			self.videoType = CMFormatDescriptionGetMediaSubType( formatDescription );
+		if (frame_number < MAX_NUM_FRAMES) {
+			if (frame_number == RECORDING_STAGE1) { // 10th frame
+				[self switchDeviceTorchMode:backCamera];
+            }
+			else if (frame_number == RECORDING_STAGE3) { // 340th frame
+				[self switchDeviceTorchMode:backCamera];
+			}
+            // 1. Collect average color channel values for HR estimation
+            // 2. Synchronously process the pixel buffer
+            if (frame_number >= RECORDING_STAGE2 && frame_number < RECORDING_STAGE3) {
+                // Allow 1 second time to adjust the camera exposure.
+                // Fill 300 datapoints
+                [self fillInArray:CMSampleBufferGetImageBuffer(sampleBuffer)];
+            }
+            ++frame_number;
+		}
+        else {
+            if (!isUsingFrontCamera) {
+				[self heartRateEstimate];
+                [self stopAndTearDownCaptureSession];
+                isUsingFrontCamera = YES;
+                [self setupAndStartCaptureSession];
+            }
+            else {
+                //[self createBitmapsfromPixelBuffer:CMSampleBufferGetImageBuffer(sampleBuffer)];
+                [self vImageHelpMeDoWork:CMSampleBufferGetImageBuffer(sampleBuffer)];
+            }
+            ++frame_number;
+        }
+		 
+		// Enqueue it for preview.  This is a shallow queue, so if image processing is taking too long,
+		// we'll drop this frame for preview (this keeps preview latency low).
+		OSStatus err = CMBufferQueueEnqueue(previewBufferQueue, sampleBuffer);
+		if ( !err ) {
+			dispatch_async(dispatch_get_main_queue(), ^{
+				CMSampleBufferRef sbuf = (CMSampleBufferRef)CMBufferQueueDequeueAndRetain(previewBufferQueue);
+				if (sbuf) {
+					CVImageBufferRef pixBuf = CMSampleBufferGetImageBuffer(sbuf);
+					[self.delegate pixelBufferReadyForDisplay:pixBuf];
+					CFRelease(sbuf); // Destroy sbuf.
+				}
+			});
+		}
+	}
+    
+	CFRetain(sampleBuffer);
+	CFRetain(formatDescription);
+	dispatch_async(movieWritingQueue, ^{
+
+		if ( assetWriter ) {
+		
+			BOOL wasReadyToRecord = (readyToRecordAudio && readyToRecordVideo);
+			
+			if (connection == videoConnection) {
+				
+				// Initialize the video input if this is not done yet
+				if (!readyToRecordVideo)
+					readyToRecordVideo = [self setupAssetWriterVideoInput:formatDescription];
+				
+				// Write video data to file
+				if (readyToRecordVideo && readyToRecordAudio)
+					[self writeSampleBuffer:sampleBuffer ofType:AVMediaTypeVideo];
+			}
+			else if (connection == audioConnection) {
+				
+				// Initialize the audio input if this is not done yet
+				if (!readyToRecordAudio)
+					readyToRecordAudio = [self setupAssetWriterAudioInput:formatDescription];
+				
+				// Write audio data to file
+				if (readyToRecordAudio && readyToRecordVideo)
+					[self writeSampleBuffer:sampleBuffer ofType:AVMediaTypeAudio];
+			}
+			
+			BOOL isReadyToRecord = (readyToRecordAudio && readyToRecordVideo);
+			if ( !wasReadyToRecord && isReadyToRecord ) {
+				recordingWillBeStarted = NO;
+				self.recording = YES;
+				[self.delegate recordingDidStart];
+			}
+		}
+		CFRelease(sampleBuffer);
+		CFRelease(formatDescription);
+	});
+}
+
+// Flash on
+
+- (void) switchDeviceTorchMode:(AVCaptureDevice *)device
+{
+    if ([device isTorchModeSupported:AVCaptureTorchModeOn]) {
+        NSError *error = nil;
+        if ([device lockForConfiguration:&error]) {
+            if ([device isTorchActive]) {
+                [device setTorchMode:AVCaptureTorchModeOff];
+            }
+            else
+                [device setTorchMode:AVCaptureTorchModeOn];
+            [device unlockForConfiguration];
+        }
+        else {
+            NSLog(@"I am not an iPhone!\n");
+        }
+    }
+}
+
 - (void) heartRateEstimate
 {
 	float min, max;
@@ -672,322 +971,9 @@ int detect_peak (
     return 0;
 }
 
-- (void) createBitmapsfromPixelBuffer: (CVImageBufferRef) pixelBuffer
-{
-	CVPixelBufferLockBaseAddress( pixelBuffer, 0 );
-	bufferWidth = CVPixelBufferGetWidth(pixelBuffer);
-    bufferHeight = CVPixelBufferGetHeight(pixelBuffer);
-    
-	unsigned char *pixelBase = (unsigned char *)CVPixelBufferGetBaseAddress(pixelBuffer);
-
-    inBuffer.data = outBuffer.data = pixelBase;
-    inBuffer.width = outBuffer.width = CVPixelBufferGetWidth(pixelBuffer);
-    inBuffer.height = outBuffer.height = CVPixelBufferGetHeight(pixelBuffer);
-    inBuffer.rowBytes = outBuffer.rowBytes = CVPixelBufferGetBytesPerRow(pixelBuffer);
-
-    vImageRotate_ARGB8888(&inBuffer, &outBuffer, NULL, M_PI_2, NULL, kvImageNoFlags);
-	// Since the pixel is an unsigned char, the following variables are always ints.
-	// Access pointer. Moving during the loop operation
-    unsigned char *pixel = pixelBase;
-    
-    // Condition 2: sufficient data is collected, we simulate HR.
-	CGFloat hr_sim = 40.0f * sinf(currentTime * 6.28f * [self heartRate] / 60.0f);
-		// Step 1 and partial 2
-    for (int row = 0; row < inBuffer.height; row++) {
-        for (int col = 0; col < inBuffer.width; col++) {
-            // Step 1. Chrominance threshold, large bitmap
-            [self step1_pixelFromRGBtoYCbCr:pixel row:row column:col];
-//			[self step1_pixelFromRGB:pixel row:row column:col];
-			// Step 2. Set low res bitmap
-            
-            if ( !( ((row+1) % 4) || ((col+1) % 4) ) ) {
-					// that is, on row 3, 7, 11, etc
-					// after col 3, 7, 11, etc inclusive
-					
-					// 1. Roll back and work on sum.
-                int sum = tmp[row-3][col-3] + tmp[row-3][col-2] + tmp[row-3][col-1] + tmp[row-3][col];
-					sum += tmp[row-2][col-3] + tmp[row-2][col-2] + tmp[row-2][col-1] + tmp[row-2][col];
-					sum += tmp[row-1][col-3] + tmp[row-1][col-2] + tmp[row-1][col-1] + tmp[row-1][col];
-					sum += tmp[row][col-3] + tmp[row][col-2] + tmp[row][col-1] + tmp[row][col];
-                    //calculate sume of Y
-                if (sum < 16)
-                    lesstemp[row/4][col/4] = 0;
-                else {
-                    CGFloat sumY = tmpY[row-3][col-3] + tmpY[row-3][col-2] + tmpY[row-3][col-1] + tmpY[row-3][col];
-                    sumY += tmpY[row-2][col-3] + tmpY[row-2][col-2] + tmpY[row-2][col-1] + tmpY[row-2][col];
-                    sumY += tmpY[row-1][col-3] + tmpY[row-1][col-2] + tmpY[row-1][col-1] + tmpY[row-1][col];
-                    sumY += tmpY[row][col-3] + tmpY[row][col-2] + tmpY[row][col-1] + tmpY[row][col];
-                    sumY = sumY * 0.0625f;
-                    CGFloat devSumY = (tmpY[row-3][col-3] - sumY) * (tmpY[row-3][col-3] - sumY);
-                    devSumY += (tmpY[row-3][col-2] - sumY) * (tmpY[row-3][col-2] - sumY);
-                    devSumY += (tmpY[row-3][col-1] - sumY) * (tmpY[row-3][col-1] - sumY);
-                    devSumY += (tmpY[row-3][col-0] - sumY) * (tmpY[row-3][col-0] - sumY);
-                    
-                    devSumY += (tmpY[row-2][col-3] - sumY) * (tmpY[row-2][col-3] - sumY);
-                    devSumY += (tmpY[row-2][col-2] - sumY) * (tmpY[row-2][col-2] - sumY);
-                    devSumY += (tmpY[row-2][col-1] - sumY) * (tmpY[row-2][col-1] - sumY);
-                    devSumY += (tmpY[row-2][col-0] - sumY) * (tmpY[row-2][col-0] - sumY);
-                    
-                    devSumY += (tmpY[row-1][col-3] - sumY) * (tmpY[row-1][col-3] - sumY);
-                    devSumY += (tmpY[row-1][col-2] - sumY) * (tmpY[row-1][col-2] - sumY);
-                    devSumY += (tmpY[row-1][col-1] - sumY) * (tmpY[row-1][col-1] - sumY);
-                    devSumY += (tmpY[row-1][col-0] - sumY) * (tmpY[row-1][col-0] - sumY);
-                    
-                    devSumY += (tmpY[row][col-3] - sumY) * (tmpY[row][col-3] - sumY);
-                    devSumY += (tmpY[row][col-2] - sumY) * (tmpY[row][col-2] - sumY);
-                    devSumY += (tmpY[row][col-1] - sumY) * (tmpY[row][col-1] - sumY);
-                    devSumY += (tmpY[row][col-0] - sumY) * (tmpY[row][col-0] - sumY);
-                    if (devSumY < 64.0f)
-                        // The skin area should be:
-                        // a. Step 2: sum of the 4 by 4 block equal to 16;
-                        // b. standard deviation of the 4 by 4 block greater than 2.
-                    
-						// Optimized: this should still work because
-						// 3/4 = 0, 7/4 = 1, ..., 956/4 = 239 in int arithmatic.
-                        lesstemp[row/4][col/4] = 0;
-                    else {
-                        lesstemp[row/4][col/4] = 1;
-                    }
-                }// 2. Return to reality
-			}
-            
-			pixel += BYTES_PER_PIXEL;
-		}
-		pixel += BYTES_PER_PIXEL;
-	}
-    pixel = pixelBase;
-    
-    for (int row = 0; row < bufferHeight; row++) {
-        for (int col = 0; col < bufferWidth; col++) {
-            if (lesstemp[row/4][col/4]) {
-                tmp[row][col] = 1;
-            }
-            pixel += BYTES_PER_PIXEL;
-        }
-        pixel += BYTES_PER_PIXEL;
-    }
-    
-    // Render loop
-    pixel = pixelBase;
-    for (int row = 0; row < bufferHeight; row++) {
-        for (int col = 0; col < bufferWidth; col++) {
-            //           if ((tmp[row][col])) {
-            if (tmp[row][col]) {
-                
-                CGFloat to_color = ((float) pixel[2]) + hr_sim;
-                if (to_color >= 255.0f) {
-                    pixel[2] = 255;
-                } else if (to_color <= 0.0f){
-                    pixel[2] = 0;
-                }
-                else {
-                    pixel[2] = (unsigned char) to_color;
-                }
-                // Use these to check mask: (int) *pixel = (int) 255; // watch out endian
-            }
-            pixel += BYTES_PER_PIXEL;
-        }
-        pixel += BYTES_PER_PIXEL;
-    }
-	CVPixelBufferUnlockBaseAddress( pixelBuffer, 0 );
-}
-- (void) vImageHelpMeDoWork: (CVImageBufferRef)pixelBuffer
-{
-    // Lock buffer base addr for modification.
-	CVPixelBufferLockBaseAddress( pixelBuffer, 0 );
-    void *baseAddress = CVPixelBufferGetBaseAddress(pixelBuffer);
-    // Setting up vImage buffers: necessary for vImage to work!
-    vImage_Error error;
-    // At baseaddress we have the bitmap data.
-    inBuffer.data = baseAddress;
-    outBuffer.data = baseAddress;
-    inBuffer.width = outBuffer.width = CVPixelBufferGetWidth(pixelBuffer);
-
-    inBuffer.height = outBuffer.height = CVPixelBufferGetHeight(pixelBuffer);
-    inBuffer.rowBytes = outBuffer.rowBytes = CVPixelBufferGetBytesPerRow(pixelBuffer);
-    //uint8_t bgcolor[4] = {0,0,0,0};
-    //error = vImageRotate_ARGB8888(&inBuffer, &outBuffer, NULL, M_PI_4, bgcolor, kvImageNoFlags);
-    error = vImageVerticalReflect_ARGB8888(&inBuffer, &outBuffer, kvImageNoFlags);
-    if (error)
-        NSLog(@"vImage error: %ld", error);
-    else {
-        error = vImageEqualization_ARGB8888(&inBuffer, &outBuffer, kvImageNoFlags);
-        if (error) {
-            NSLog(@"vImage error: %ld", error);
-        }
-    }
-    CVPixelBufferUnlockBaseAddress( pixelBuffer, 0 );
-}
-#pragma mark Capture
-
-- (void)captureOutput:(AVCaptureOutput *)captureOutput didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer fromConnection:(AVCaptureConnection *)connection
-{
-	CMFormatDescriptionRef formatDescription = CMSampleBufferGetFormatDescription(sampleBuffer);
-    
-	if ( connection == videoConnection ) {
-		
-		// Get framerate
-		CMTime timestamp = CMSampleBufferGetPresentationTimeStamp( sampleBuffer );
-		[self calculateFramerateAtTimestamp:timestamp];
-        currentTime = CMTimeGetSeconds(timestamp);
-		// Get frame dimensions (for onscreen display)
-		if (self.videoDimensions.width == 0 && self.videoDimensions.height == 0)
-			self.videoDimensions = CMVideoFormatDescriptionGetDimensions( formatDescription );
-		
-		// Get buffer type
-		if ( self.videoType == 0 )
-			self.videoType = CMFormatDescriptionGetMediaSubType( formatDescription );
-		if (frame_number < MAX_NUM_FRAMES) {
-			if (frame_number == RECORDING_STAGE1) { // 10th frame
-				[self switchDeviceTorchMode:backCamera];
-            }
-			else if (frame_number == RECORDING_STAGE3) { // 340th frame
-				[self switchDeviceTorchMode:backCamera];
-			}
-            // 1. Collect average color channel values for HR estimation
-            // 2. Synchronously process the pixel buffer
-            if (frame_number >= RECORDING_STAGE2 && frame_number < RECORDING_STAGE3) {
-                // Allow 1 second time to adjust the camera exposure.
-                // Fill 300 datapoints
-                [self fillInArray:CMSampleBufferGetImageBuffer(sampleBuffer)];
-            }
-            ++frame_number;
-		}
-        else {
-            if (!isUsingFrontCamera) {
-				[self heartRateEstimate];
-                [self stopAndTearDownCaptureSession];
-                isUsingFrontCamera = YES;
-                [self setupAndStartCaptureSession];
-            }
-            else {
-                //[self createBitmapsfromPixelBuffer:CMSampleBufferGetImageBuffer(sampleBuffer)];
-                [self vImageHelpMeDoWork:CMSampleBufferGetImageBuffer(sampleBuffer)];
-            }
-            ++frame_number;
-        }
-		 
-		// Enqueue it for preview.  This is a shallow queue, so if image processing is taking too long,
-		// we'll drop this frame for preview (this keeps preview latency low).
-		OSStatus err = CMBufferQueueEnqueue(previewBufferQueue, sampleBuffer);
-		if ( !err ) {
-			dispatch_async(dispatch_get_main_queue(), ^{
-				CMSampleBufferRef sbuf = (CMSampleBufferRef)CMBufferQueueDequeueAndRetain(previewBufferQueue);
-				if (sbuf) {
-					CVImageBufferRef pixBuf = CMSampleBufferGetImageBuffer(sbuf);
-					[self.delegate pixelBufferReadyForDisplay:pixBuf];
-					CFRelease(sbuf); // Destroy sbuf.
-				}
-			});
-		}
-	}
-    
-	CFRetain(sampleBuffer);
-	CFRetain(formatDescription);
-	dispatch_async(movieWritingQueue, ^{
-
-		if ( assetWriter ) {
-		
-			BOOL wasReadyToRecord = (readyToRecordAudio && readyToRecordVideo);
-			
-			if (connection == videoConnection) {
-				
-				// Initialize the video input if this is not done yet
-				if (!readyToRecordVideo)
-					readyToRecordVideo = [self setupAssetWriterVideoInput:formatDescription];
-				
-				// Write video data to file
-				if (readyToRecordVideo && readyToRecordAudio)
-					[self writeSampleBuffer:sampleBuffer ofType:AVMediaTypeVideo];
-			}
-			else if (connection == audioConnection) {
-				
-				// Initialize the audio input if this is not done yet
-				if (!readyToRecordAudio)
-					readyToRecordAudio = [self setupAssetWriterAudioInput:formatDescription];
-				
-				// Write audio data to file
-				if (readyToRecordAudio && readyToRecordVideo)
-					[self writeSampleBuffer:sampleBuffer ofType:AVMediaTypeAudio];
-			}
-			
-			BOOL isReadyToRecord = (readyToRecordAudio && readyToRecordVideo);
-			if ( !wasReadyToRecord && isReadyToRecord ) {
-				recordingWillBeStarted = NO;
-				self.recording = YES;
-				[self.delegate recordingDidStart];
-			}
-		}
-		CFRelease(sampleBuffer);
-		CFRelease(formatDescription);
-	});
-}
-
-// Flash on
-
-- (void) switchDeviceTorchMode:(AVCaptureDevice *)device
-{
-    if ([device isTorchModeSupported:AVCaptureTorchModeOn]) {
-        NSError *error = nil;
-        if ([device lockForConfiguration:&error]) {
-            if ([device isTorchActive]) {
-                [device setTorchMode:AVCaptureTorchModeOff];
-            }
-            else
-                [device setTorchMode:AVCaptureTorchModeOn];
-            [device unlockForConfiguration];
-        }
-        else {
-            NSLog(@"I am not an iPhone!\n");
-        }
-    }
-}
-
-// new : Turen off AF
-
-- (void) switchDeviceAF:(AVCaptureDevice *)device
-{
-    //CGPoint autofocusPoint = CGPointMake(0.5f, 0.5f);
-    if ([device isFocusModeSupported:AVCaptureFocusModeLocked]) {
-        NSError *error = nil;
-        //[device setFocusPointOfInterest:autofocusPoint];
-        if ([device lockForConfiguration:&error]) {
-            [device setFocusMode:AVCaptureFocusModeLocked];
-            [device unlockForConfiguration];
-        }
-        else {
-            NSLog(@"I gave up AE.\n");
-        }
-        
-    }
-}
-
-// new : Turen off AE
-- (void) switchDeviceAE:(AVCaptureDevice *)device {
-    if ([device isExposureModeSupported:AVCaptureExposureModeLocked]) {
-        NSError *error = nil;
-        if ([device lockForConfiguration:&error]) {
-            [device setExposureMode:AVCaptureExposureModeLocked];
-            [device unlockForConfiguration];
-        }
-        else {
-            NSLog(@"I gave up AF.\n");
-        }
-    }
-}
-
-// new : Turen off white balance
-- (void) switchDeviceWhiteBalance:(AVCaptureDevice *)device {
-    if ([device isWhiteBalanceModeSupported:AVCaptureWhiteBalanceModeLocked]) {
-        NSError *error = nil;
-        if ([device lockForConfiguration:&error]) {
-            [device setWhiteBalanceMode:AVCaptureWhiteBalanceModeLocked];
-            [device unlockForConfiguration];
-        }
-        else {
-            NSLog(@"I gave up WB.\n");
-        }
-    }
+void MyPixelBufferReleaseCallback (void *releaseRefCon,
+                                   const void *baseAddress)
+{;
 }
 
 - (AVCaptureDevice *)videoDeviceWithPosition:(AVCaptureDevicePosition)position

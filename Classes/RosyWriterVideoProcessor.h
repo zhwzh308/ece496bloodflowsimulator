@@ -60,7 +60,7 @@
     // Power of vector calculus...
     // Note: 1. contiguous allocation; 2. 16-byte aligned.
     vImage_Buffer inBuffer, outBuffer;
-    vImage_Buffer yuvFrame;
+    CVPixelBufferRef yuvBufferRef;
     vImage_CGImageFormat vImageformat;
     // Binary bitmaps...
     BOOL tmp[540][960];
@@ -111,15 +111,8 @@ int detect_peak(
 				float*         peaks_values
 				);
 
-long myEmboss(vImage_Buffer *inData,
-              vImage_Buffer *outData,
-              const void *kernel,
-              unsigned int kernel_height,
-              unsigned int kernel_width,
-              int divisor ,
-              vImage_Flags flags
-              );
-
+void MyPixelBufferReleaseCallback(void *releaseRefCon,
+                                  const void *baseAddress);
 @property(readonly, getter=isRecording) BOOL recording;
 
 @end
