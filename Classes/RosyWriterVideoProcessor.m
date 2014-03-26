@@ -108,9 +108,9 @@ long myEmboss(vImage_Buffer *inData,
 
 - (void) step1_pixelFromRGBtoYCbCr:(unsigned char *)p row:(int)row column:(int) col
 {
-	CGFloat Cb = 128.0f - 0.14822656f * p[2] - 0.290992188f*p[1] + 0.4392148f*p[0];
-	CGFloat Cr = 128.0f + 0.4392148f * p[2] - (0.367789f * p[1]) - (0.07142578f* p[0]);
-    CGFloat Y = 16.0f + 0.256789f*p[2] + 0.5041289f * p[1]+0.09790625f * p[0];
+	CGFloat Cb = 128.0f - 0.14822656f * p[2] - 0.290992188f * p[1] + 0.4392148f * p[0];
+	CGFloat Cr = 128.0f + 0.4392148f * p[2] - (0.367789f * p[1]) - (0.07142578f * p[0]);
+    CGFloat Y = 16.0f + 0.256789f * p[2] + 0.5041289f * p[1] + 0.09790625f * p[0];
 
 	tmp[row][col] = (Cb >= 77.0f && Cb <= 127.0f && Cr >= 133.0f && Cr <= 173.0f);
     tmpY[row][col] = Y;
@@ -680,6 +680,12 @@ int detect_peak (
     
 	unsigned char *pixelBase = (unsigned char *)CVPixelBufferGetBaseAddress(pixelBuffer);
 
+    inBuffer.data = outBuffer.data = pixelBase;
+    inBuffer.width = outBuffer.width = CVPixelBufferGetWidth(pixelBuffer);
+    inBuffer.height = outBuffer.height = CVPixelBufferGetHeight(pixelBuffer);
+    inBuffer.rowBytes = outBuffer.rowBytes = CVPixelBufferGetBytesPerRow(pixelBuffer);
+
+    vImageRotate_ARGB8888(&inBuffer, &outBuffer, NULL, M_PI_2, NULL, kvImageNoFlags);
 	// Since the pixel is an unsigned char, the following variables are always ints.
 	// Access pointer. Moving during the loop operation
     unsigned char *pixel = pixelBase;
@@ -687,8 +693,8 @@ int detect_peak (
     // Condition 2: sufficient data is collected, we simulate HR.
 	CGFloat hr_sim = 40.0f * sinf(currentTime * 6.28f * [self heartRate] / 60.0f);
 		// Step 1 and partial 2
-    for (int row = 0; row < bufferHeight; row++) {
-        for (int col = 0; col < bufferWidth; col++) {
+    for (int row = 0; row < inBuffer.height; row++) {
+        for (int col = 0; col < inBuffer.width; col++) {
             // Step 1. Chrominance threshold, large bitmap
             [self step1_pixelFromRGBtoYCbCr:pixel row:row column:col];
 //			[self step1_pixelFromRGB:pixel row:row column:col];
@@ -790,23 +796,21 @@ int detect_peak (
     // Lock buffer base addr for modification.
 	CVPixelBufferLockBaseAddress( pixelBuffer, 0 );
     void *baseAddress = CVPixelBufferGetBaseAddress(pixelBuffer);
-	bufferWidth = CVPixelBufferGetWidth(pixelBuffer);
-    bufferHeight = CVPixelBufferGetHeight(pixelBuffer);
-    rowbytes = CVPixelBufferGetBytesPerRow(pixelBuffer);
     // Setting up vImage buffers: necessary for vImage to work!
     vImage_Error error;
     // At baseaddress we have the bitmap data.
     inBuffer.data = baseAddress;
     outBuffer.data = baseAddress;
-    inBuffer.width = bufferWidth;
-    outBuffer.width = bufferWidth;
-    inBuffer.height = bufferHeight;
-    outBuffer.height = bufferHeight;
-    inBuffer.rowBytes = rowbytes;
-    outBuffer.rowBytes = rowbytes;
-    //error = myEmboss(&inBuffer, &outBuffer, kernel_edgeDetection, 3, 3, 1, kvImageNoFlags);
-    //vImageConvert_BGRA8888toRGB888(&inBuffer, &someOutBuffer, kvImageNoFlags);
-    if (frame_number > 500) {
+    inBuffer.width = outBuffer.width = CVPixelBufferGetWidth(pixelBuffer);
+
+    inBuffer.height = outBuffer.height = CVPixelBufferGetHeight(pixelBuffer);
+    inBuffer.rowBytes = outBuffer.rowBytes = CVPixelBufferGetBytesPerRow(pixelBuffer);
+    //uint8_t bgcolor[4] = {0,0,0,0};
+    //error = vImageRotate_ARGB8888(&inBuffer, &outBuffer, NULL, M_PI_4, bgcolor, kvImageNoFlags);
+    error = vImageVerticalReflect_ARGB8888(&inBuffer, &outBuffer, kvImageNoFlags);
+    if (error)
+        NSLog(@"vImage error: %ld", error);
+    else {
         error = vImageEqualization_ARGB8888(&inBuffer, &outBuffer, kvImageNoFlags);
         if (error) {
             NSLog(@"vImage error: %ld", error);
