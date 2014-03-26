@@ -621,7 +621,7 @@ const float rgbToYuv[] ={ 0.257,  0.439,  -0.148, 0.06,
 {
     // Lock buffer base addr for modification.
 	CVPixelBufferLockBaseAddress( pixelBuffer, 0 );
-    void *baseAddress = CVPixelBufferGetBaseAddress(pixelBuffer);
+    unsigned char *baseAddress = CVPixelBufferGetBaseAddress(pixelBuffer);
     // Setting up vImage buffers: necessary for vImage to work!
     vImage_Error error;
     // At baseaddress we have the bitmap data.
@@ -657,26 +657,26 @@ const float rgbToYuv[] ={ 0.257,  0.439,  -0.148, 0.06,
             CVBufferRelease(yuvBufferRef);
         }
         
-        unsigned char *pixel = baseAddress + 2;
-        for (int row = 0; row < inBuffer.height; row++) {
-            for (int col = 0; col < inBuffer.width; col++) {
+        baseAddress += 2;
+        for (int row = 0; row < inBuffer.height; ++row) {
+            for (int col = 0; col < inBuffer.width; ++col) {
                 if (tmp[row][col]) {
                     // Simply turn off pixels
                     // pixel[0] = pixel[1] = pixel[2] = 0;
                     /* Lasy  calculation: only when the condition is matched. */
-                    CGFloat to_color = ((float) *pixel) + hr_sim;
+                    CGFloat to_color = ((float) *baseAddress) + hr_sim;
                     if (to_color >= 255.0f) {
-                        *pixel = 255;
+                        *baseAddress = 255;
                     } else if (to_color <= 0.0f){
-                        *pixel = 0;
+                        *baseAddress = 0;
                     }
                     else {
-                        *pixel = (unsigned char) to_color;
+                        *baseAddress = (unsigned char) to_color;
                     }
                 }
-                pixel += BYTES_PER_PIXEL;
+                baseAddress += BYTES_PER_PIXEL;
             }
-            pixel += BYTES_PER_PIXEL;
+            baseAddress += BYTES_PER_PIXEL;
         }
     }
     CVPixelBufferUnlockBaseAddress( pixelBuffer, 0 );
