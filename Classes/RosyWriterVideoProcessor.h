@@ -66,7 +66,7 @@
     BOOL tmp[540][960];
     BOOL tmp2[540][960];
     BOOL lesstemp[135][240];
-    CGFloat tmpY[540][960];
+    float tmpY[540][960];
     
     BOOL isUsingFrontCamera, readyToRecordAudio, readyToRecordVideo, recordingWillBeStarted, recordingWillBeStopped;
 	BOOL recording;

@@ -11,13 +11,8 @@
 // Static kernel for image convolution.
 //static const signed int kernel_emboss[] = {-2, -2, 0, -2, 6, 0, 0, 0, 0};
 //static const signed int kernel_Gaussianblur[] = {1,2,1,2,4,2,1,2,1};
-
-const float rgbToYuv[] ={ 0.257,  0.439,  -0.148, 0.06,
-    0.504, -0.368,  -0.291, 0.5,
-    0.098, -0.071,   0.439, 0.5,
-    0.0,     0.0,     0.0, 1.0 };
-
 //static const float kernel_edgeDetection[9] = {-1, -1, -1, -1, 9, -1, -1, -1, -1};
+
 @interface RosyWriterVideoProcessor ()
 
 // Redeclared as readwrite so that we can write to the property and still be atomic with external readers.
@@ -35,10 +30,7 @@ const float rgbToYuv[] ={ 0.257,  0.439,  -0.148, 0.06,
 @implementation RosyWriterVideoProcessor
 
 @synthesize delegate;
-@synthesize videoFrameRate, videoDimensions, videoType;
-@synthesize referenceOrientation;
-@synthesize videoOrientation;
-@synthesize recording;
+@synthesize videoFrameRate, videoDimensions, videoType, referenceOrientation, videoOrientation, recording;
 
 - (id) init
 {
@@ -99,10 +91,10 @@ const float rgbToYuv[] ={ 0.257,  0.439,  -0.148, 0.06,
 {
 	CVPixelBufferLockBaseAddress( yCbCrPixel, kCVPixelBufferLock_ReadOnly );
     unsigned char *pixel = CVPixelBufferGetBaseAddress(yCbCrPixel);
-    for (int i = 0; i<inBuffer.height; ++i) {
-        for (int j = 0; j<inBuffer.width; ++j) {
+    for (int i = 0; i < inBuffer.height; ++i) {
+        for (int j = 0; j < inBuffer.width; ++j) {
             //tmp[i][j]=(pixel[2] >= 77 && pixel[2] <= 127 && pixel[0] >= 133 && pixel[0] <= 173);
-            tmp[i][j] = (pixel[0] >= 77 && pixel[0] <= 127 && pixel[2] >= 133 && pixel[2] <= 173);
+            tmp[i][j] = (*pixel >= 77 && *pixel <= 127 && pixel[2] >= 133 && pixel[2] <= 173);
             pixel += BYTES_PER_PIXEL;
         }
         pixel += BYTES_PER_PIXEL;
@@ -113,6 +105,7 @@ const float rgbToYuv[] ={ 0.257,  0.439,  -0.148, 0.06,
 
 - (void) step1_pixelFromRGB:(unsigned char *)p row:(int)row column:(int) col
 {
+    // Using information from Inaz
     tmp2[row][col] = ((p[2] >= 95) && (p[1] >40) && (p[0] >= 20) && (fmaxf(p[2], (fmaxf(p[1], p[0])) - fminf(p[2], fminf(p[1], p[0]))) > 15) && (p[2] > p[0]) && (p[1] > p[0]) && (fabsf(p[2] - p[1]) <= 15.0f));
 }
 
@@ -624,13 +617,13 @@ const float rgbToYuv[] ={ 0.257,  0.439,  -0.148, 0.06,
     unsigned char *baseAddress = CVPixelBufferGetBaseAddress(pixelBuffer);
     // Setting up vImage buffers: necessary for vImage to work!
     vImage_Error error;
-    // At baseaddress we have the bitmap data.
+    // At base address is the bitmap data.
     inBuffer.data = baseAddress;
+    // Setting up sizes
     inBuffer.width = CVPixelBufferGetWidth(pixelBuffer);
-
     inBuffer.height = CVPixelBufferGetHeight(pixelBuffer);
     inBuffer.rowBytes = CVPixelBufferGetBytesPerRow(pixelBuffer);
-    //uint8_t bgcolor[4] = {0,0,0,0};
+
     //error = vImageRotate_ARGB8888(&inBuffer, &outBuffer, NULL, M_PI_4, bgcolor, kvImageNoFlags);
     error = vImageVerticalReflect_ARGB8888(&inBuffer, &inBuffer, kvImageNoFlags);
     if (error)
@@ -638,7 +631,6 @@ const float rgbToYuv[] ={ 0.257,  0.439,  -0.148, 0.06,
     else {
         //error = vImageEqualization_ARGB8888(&inBuffer, &outBuffer, kvImageNoFlags);
         
-        //Component Y'CbCr 8-bit 4:4:4.
         CVReturn myBufferCreation = CVPixelBufferCreateWithBytes(NULL, inBuffer.width,
                                                                  inBuffer.height,
                                                                  //kCVPixelFormatType_444YpCbCr8,
