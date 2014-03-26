@@ -59,7 +59,7 @@
     // iPhone 5s: 1136 x 640, 4/4s 960 x 640.
     // Power of vector calculus...
     // Note: 1. contiguous allocation; 2. 16-byte aligned.
-    vImage_Buffer inBuffer, outBuffer;
+    vImage_Buffer inBuffer;
     CVPixelBufferRef yuvBufferRef;
     vImage_CGImageFormat vImageformat;
     // Binary bitmaps...

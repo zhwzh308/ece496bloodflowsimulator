@@ -102,12 +102,12 @@ const float rgbToYuv[] ={ 0.257,  0.439,  -0.148, 0.06,
     for (int i = 0; i<inBuffer.height; ++i) {
         for (int j = 0; j<inBuffer.width; ++j) {
             //tmp[i][j]=(pixel[2] >= 77 && pixel[2] <= 127 && pixel[0] >= 133 && pixel[0] <= 173);
-            tmp[i][j]=(pixel[0] >= 77 && pixel[0] <= 127 && pixel[2] >= 133 && pixel[2] <= 173);
+            tmp[i][j] = (pixel[0] >= 77 && pixel[0] <= 127 && pixel[2] >= 133 && pixel[2] <= 173);
             pixel += BYTES_PER_PIXEL;
         }
         pixel += BYTES_PER_PIXEL;
     }
-    //NSLog(@"Buffer bytesPerRow is %zu", CVPixelBufferGetBytesPerRow(yCbCrPixel));
+    
 	CVPixelBufferUnlockBaseAddress( yCbCrPixel, kCVPixelBufferLock_ReadOnly );
 }
 
@@ -506,10 +506,10 @@ const float rgbToYuv[] ={ 0.257,  0.439,  -0.148, 0.06,
     
 	unsigned char *pixelBase = (unsigned char *)CVPixelBufferGetBaseAddress(pixelBuffer);
 
-    inBuffer.data = outBuffer.data = pixelBase;
-    inBuffer.width = outBuffer.width = CVPixelBufferGetWidth(pixelBuffer);
-    inBuffer.height = outBuffer.height = CVPixelBufferGetHeight(pixelBuffer);
-    inBuffer.rowBytes = outBuffer.rowBytes = CVPixelBufferGetBytesPerRow(pixelBuffer);
+    inBuffer.data = pixelBase;
+    inBuffer.width = CVPixelBufferGetWidth(pixelBuffer);
+    inBuffer.height = CVPixelBufferGetHeight(pixelBuffer);
+    inBuffer.rowBytes = CVPixelBufferGetBytesPerRow(pixelBuffer);
 
 	// Since the pixel is an unsigned char, the following variables are always ints.
 	// Access pointer. Moving during the loop operation
@@ -626,14 +626,13 @@ const float rgbToYuv[] ={ 0.257,  0.439,  -0.148, 0.06,
     vImage_Error error;
     // At baseaddress we have the bitmap data.
     inBuffer.data = baseAddress;
-    outBuffer.data = baseAddress;
-    inBuffer.width = outBuffer.width = CVPixelBufferGetWidth(pixelBuffer);
+    inBuffer.width = CVPixelBufferGetWidth(pixelBuffer);
 
-    inBuffer.height = outBuffer.height = CVPixelBufferGetHeight(pixelBuffer);
-    inBuffer.rowBytes = outBuffer.rowBytes = CVPixelBufferGetBytesPerRow(pixelBuffer);
+    inBuffer.height = CVPixelBufferGetHeight(pixelBuffer);
+    inBuffer.rowBytes = CVPixelBufferGetBytesPerRow(pixelBuffer);
     //uint8_t bgcolor[4] = {0,0,0,0};
     //error = vImageRotate_ARGB8888(&inBuffer, &outBuffer, NULL, M_PI_4, bgcolor, kvImageNoFlags);
-    error = vImageVerticalReflect_ARGB8888(&inBuffer, &outBuffer, kvImageNoFlags);
+    error = vImageVerticalReflect_ARGB8888(&inBuffer, &inBuffer, kvImageNoFlags);
     if (error)
         NSLog(@"vImage error: %ld", error);
     else {
@@ -658,21 +657,21 @@ const float rgbToYuv[] ={ 0.257,  0.439,  -0.148, 0.06,
             CVBufferRelease(yuvBufferRef);
         }
         
-        unsigned char *pixel = baseAddress;
+        unsigned char *pixel = baseAddress + 2;
         for (int row = 0; row < inBuffer.height; row++) {
             for (int col = 0; col < inBuffer.width; col++) {
                 if (tmp[row][col]) {
                     // Simply turn off pixels
-                    // pixel[0]=pixel[1]=pixel[2]=0;
+                    // pixel[0] = pixel[1] = pixel[2] = 0;
                     /* Lasy  calculation: only when the condition is matched. */
-                    CGFloat to_color = ((float) pixel[2]) + hr_sim;
+                    CGFloat to_color = ((float) *pixel) + hr_sim;
                     if (to_color >= 255.0f) {
-                        pixel[2] = 255;
+                        *pixel = 255;
                     } else if (to_color <= 0.0f){
-                        pixel[2] = 0;
+                        *pixel = 0;
                     }
                     else {
-                        pixel[2] = (unsigned char) to_color;
+                        *pixel = (unsigned char) to_color;
                     }
                 }
                 pixel += BYTES_PER_PIXEL;
