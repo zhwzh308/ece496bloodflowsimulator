@@ -655,7 +655,7 @@ const float rgbToYuv[] ={ 0.257,  0.439,  -0.148, 0.06,
         // Render loop
         CGFloat hr_sim = 40.0f * sinf(currentTime * 6.28f * [self heartRate] / 60.0f);
         if (yuvBufferRef != NULL) {
-            CFRelease(yuvBufferRef);
+            CVBufferRelease(yuvBufferRef);
         }
         
         unsigned char *pixel = baseAddress;
