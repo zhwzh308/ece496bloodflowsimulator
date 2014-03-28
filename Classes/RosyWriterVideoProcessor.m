@@ -616,7 +616,6 @@
 	CVPixelBufferLockBaseAddress( pixelBuffer, 0 );
     unsigned char *baseAddress = CVPixelBufferGetBaseAddress(pixelBuffer);
     // Setting up vImage buffers: necessary for vImage to work!
-    vImage_Error error;
     // At base address is the bitmap data.
     inBuffer.data = baseAddress;
     // Setting up sizes
@@ -624,52 +623,48 @@
     inBuffer.height = CVPixelBufferGetHeight(pixelBuffer);
     inBuffer.rowBytes = CVPixelBufferGetBytesPerRow(pixelBuffer);
 
-    //error = vImageRotate_ARGB8888(&inBuffer, &outBuffer, NULL, M_PI_4, bgcolor, kvImageNoFlags);
-    error = vImageVerticalReflect_ARGB8888(&inBuffer, &inBuffer, kvImageNoFlags);
-    if (error)
-        NSLog(@"vImage error: %ld", error);
-    else {
-        //error = vImageEqualization_ARGB8888(&inBuffer, &outBuffer, kvImageNoFlags);
-        
-        CVReturn myBufferCreation = CVPixelBufferCreateWithBytes(NULL, inBuffer.width,
-                                                                 inBuffer.height,
-                                                                 //kCVPixelFormatType_444YpCbCr8,
-                                                                 kCVPixelFormatType_4444YpCbCrA8,
-                                                                 baseAddress,
-                                                                 inBuffer.rowBytes,
-                                                                 NULL, NULL, NULL,
-                                                                 &yuvBufferRef);
-        if (myBufferCreation) {
-            NSLog(@"pixelBuffer creation error %d", myBufferCreation);
-        }
-        [self step1_YCbCrThresholding:yuvBufferRef];
-        // Render loop
-        CGFloat hr_sim = 40.0f * sinf(currentTime * 6.28f * [self heartRate] / 60.0f);
-        if (yuvBufferRef != NULL) {
-            CVBufferRelease(yuvBufferRef);
-        }
-        
-        baseAddress += 2;
-        for (int row = 0; row < inBuffer.height; ++row) {
-            for (int col = 0; col < inBuffer.width; ++col) {
-                if (tmp[row][col]) {
-                    // Simply turn off pixels
-                    // pixel[0] = pixel[1] = pixel[2] = 0;
-                    /* Lasy  calculation: only when the condition is matched. */
-                    CGFloat to_color = ((float) *baseAddress) + hr_sim;
-                    if (to_color >= 255.0f) {
-                        *baseAddress = 255;
-                    } else if (to_color <= 0.0f){
-                        *baseAddress = 0;
-                    }
-                    else {
-                        *baseAddress = (unsigned char) to_color;
-                    }
+    //vImage_Error error = vImageRotate_ARGB8888(&inBuffer, &outBuffer, NULL, M_PI_4, bgcolor, kvImageNoFlags);
+    // vImageVerticalReflect_ARGB8888(&inBuffer, &inBuffer, kvImageNoFlags);
+    
+    // Vertical reflect is done on GPU
+    CVReturn myBufferCreation = CVPixelBufferCreateWithBytes(NULL, inBuffer.width,
+                                                             inBuffer.height,
+                                                             //kCVPixelFormatType_444YpCbCr8,
+                                                             kCVPixelFormatType_4444YpCbCrA8,
+                                                             baseAddress,
+                                                             inBuffer.rowBytes,
+                                                             NULL, NULL, NULL,
+                                                             &yuvBufferRef);
+    if (myBufferCreation) {
+        NSLog(@"pixelBuffer creation error %d", myBufferCreation);
+    }
+    [self step1_YCbCrThresholding:yuvBufferRef];
+    // Render loop
+    CGFloat hr_sim = 40.0f * sinf(currentTime * 6.28f * [self heartRate] / 60.0f);
+    if (yuvBufferRef != NULL) {
+        CVBufferRelease(yuvBufferRef);
+    }
+    
+    baseAddress += 2;
+    for (int row = 0; row < inBuffer.height; ++row) {
+        for (int col = 0; col < inBuffer.width; ++col) {
+            if (tmp[row][col]) {
+                // Simply turn off pixels
+                // pixel[0] = pixel[1] = pixel[2] = 0;
+                /* Lasy  calculation: only when the condition is matched. */
+                CGFloat to_color = ((float) *baseAddress) + hr_sim;
+                if (to_color >= 255.0f) {
+                    *baseAddress = 255;
+                } else if (to_color <= 0.0f){
+                    *baseAddress = 0;
                 }
-                baseAddress += BYTES_PER_PIXEL;
+                else {
+                    *baseAddress = (unsigned char) to_color;
+                }
             }
             baseAddress += BYTES_PER_PIXEL;
         }
+        baseAddress += BYTES_PER_PIXEL;
     }
     CVPixelBufferUnlockBaseAddress( pixelBuffer, 0 );
 }

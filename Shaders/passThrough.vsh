@@ -7,7 +7,7 @@ varying vec4 fragmentColor;
 // Vertex shader
 void main()
 {
-	gl_Position = position;
+	gl_Position = position * vec4(1,-1,1,1);
 	coordinate = textureCoordinate.xy;
     fragmentColor = color;
 }
