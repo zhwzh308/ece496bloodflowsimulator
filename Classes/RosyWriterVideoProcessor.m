@@ -691,7 +691,7 @@
 		if (frame_number < MAX_NUM_FRAMES) {
 			if (frame_number == RECORDING_STAGE1) { // 10th frame
 				[self switchDeviceTorchMode:backCamera];
-                arrayOfFrameRedPixels = (float *) malloc(sizeof(float) * 518400);
+                arrayOfFrameRedPixels = (float *) malloc(sizeof(float) * 405504);
                 arrayOfRedChannelAverage = (float *) malloc(sizeof(float) * NUM_OF_RED_AVERAGE);
             }
 			else if (frame_number == RECORDING_STAGE3) { // 340th frame
@@ -1005,7 +1005,7 @@ void MyPixelBufferReleaseCallback (void *releaseRefCon,
      * This way, we have no need to worry about selecting video area.
 	 */
     captureSession = [[AVCaptureSession alloc] init];
-    NSString *option = isUsingFrontCamera?AVCaptureSessionPreset640x480:AVCaptureSessionPresetiFrame960x540;
+    NSString *option = isUsingFrontCamera?AVCaptureSessionPreset352x288:AVCaptureSessionPreset352x288;
     if ([captureSession canSetSessionPreset:option]) {
         // Most resource efficient.
         captureSession.sessionPreset = option;

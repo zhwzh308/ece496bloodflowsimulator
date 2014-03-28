@@ -7,6 +7,8 @@
 #define RECORDING_STAGE2 40
 #define RED_INDEX frame_number-RECORDING_STAGE2
 #define RECORDING_STAGE3 340
+#define NORMALIZED_WIDTH 352
+#define NORMALIZED_HEIGHT 288
 
 @protocol RosyWriterVideoProcessorDelegate;
 
@@ -57,15 +59,15 @@
     unsigned int sizeOfDifferences;
     // Choosing maximum value so that profiles are compatible.
     // iPhone 5s: 1136 x 640, 4/4s 960 x 640.
-    // Power of vector calculus...
+    // Use 352 x 288
     // Note: 1. contiguous allocation; 2. 16-byte aligned.
     vImage_Buffer inBuffer;
     CVPixelBufferRef yuvBufferRef;
     // Binary bitmaps...
-    BOOL tmp[540][960];
-    BOOL tmp2[540][960];
-    BOOL lesstemp[135][240];
-    float tmpY[540][960];
+    BOOL tmp[NORMALIZED_HEIGHT][NORMALIZED_WIDTH];
+    BOOL tmp2[NORMALIZED_HEIGHT][NORMALIZED_WIDTH];
+    BOOL lesstemp[72][88];
+    float tmpY[NORMALIZED_HEIGHT][NORMALIZED_WIDTH];
     
     BOOL isUsingFrontCamera, readyToRecordAudio, readyToRecordVideo, recordingWillBeStarted, recordingWillBeStopped;
 	BOOL recording;
