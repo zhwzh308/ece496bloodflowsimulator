@@ -17,7 +17,7 @@
 
 // Redeclared as readwrite so that we can write to the property and still be atomic with external readers.
 @property (readwrite) Float64 videoFrameRate;
-@property (readwrite) CGFloat heartRate;
+@property (readwrite) float heartRate, percentComplete;
 @property (readwrite) CMVideoDimensions videoDimensions;
 @property (readwrite) CMVideoCodecType videoType;
 
@@ -44,7 +44,7 @@
         frame_number = 0;
         isUsingFrontCamera = NO;
 
-        _heartRate=0.0f;
+        _heartRate = _percentComplete = 0.0f;
 
         frontCamera = nil;
 
@@ -77,14 +77,21 @@
 }
 // Set tmp at row and col.
 
-- (void) step1_pixelFromRGBtoYCbCr:(unsigned char *)p row:(int)row column:(int) col
+- (void) step1_pixelFromRGBtoYCbCr
 {
-	CGFloat Cb = 128.0f - 0.14822656f * p[2] - 0.290992188f * p[1] + 0.4392148f * p[0];
-	CGFloat Cr = 128.0f + 0.4392148f * p[2] - (0.367789f * p[1]) - (0.07142578f * p[0]);
-    CGFloat Y = 16.0f + 0.256789f * p[2] + 0.5041289f * p[1] + 0.09790625f * p[0];
-
-	tmp[row][col] = (Cb >= 77.0f && Cb <= 127.0f && Cr >= 133.0f && Cr <= 173.0f);
-    tmpY[row][col] = Y;
+    float cb, cr;//, y;
+    unsigned char * p = inBuffer.data;
+    for (int row = 0; row < inBuffer.height; ++row) {
+        for (int col = 0; col < inBuffer.width; ++col) {
+            cb = 128.0f - 0.14822656f * p[2] - 0.290992188f * p[1] + 0.4392148f * p[0];
+            cr = 128.0f + 0.4392148f * p[2] - (0.367789f * p[1]) - (0.07142578f * p[0]);
+            tmp[row][col] = (cb >= 77.0f && cb <= 127.0f && cr >= 133.0f && cr <= 173.0f);
+            p += BYTES_PER_PIXEL;
+        }
+        p += BYTES_PER_PIXEL;
+    }
+    //CGFloat Y = 16.0f + 0.256789f * p[2] + 0.5041289f * p[1] + 0.09790625f * p[0];
+    //tmpY[row][col] = Y;
 }
 
 - (void) step1_YCbCrThresholding:(CVPixelBufferRef)yCbCrPixel
@@ -93,58 +100,56 @@
     unsigned char *pixel = CVPixelBufferGetBaseAddress(yCbCrPixel);
     for (int i = 0; i < inBuffer.height; ++i) {
         vDSP_vfltu8(pixel+1, BYTES_PER_PIXEL, tmpY[i], 1, inBuffer.width);
-        for (int j = 0; j < inBuffer.width; ++j) {
+        //for (int j = 0; j < inBuffer.width; ++j) {
             //tmp[i][j]=(pixel[2] >= 77 && pixel[2] <= 127 && pixel[0] >= 133 && pixel[0] <= 173);
-            tmp[i][j] = (*pixel >= 77 && *pixel <= 127 && pixel[2] >= 133 && pixel[2] <= 173);
-            pixel += BYTES_PER_PIXEL;
-        }
-        pixel += BYTES_PER_PIXEL;
+            //tmp[i][j] = (*pixel >= 77 && *pixel <= 127 && pixel[2] >= 133 && pixel[2] <= 173);
+            //pixel += BYTES_PER_PIXEL;
+        //}
+        pixel += BYTES_PER_PIXEL * inBuffer.width;
     }
 	CVPixelBufferUnlockBaseAddress( yCbCrPixel, kCVPixelBufferLock_ReadOnly );
 }
 
 - (void) step2_densityRegularization
 {
+    CGFloat sumY, devSumY;
+    unsigned char sum;
     for (int row = 0; row<inBuffer.height; ++row) {
         for (int col = 0; col<inBuffer.width; ++col) {
-            
             if ( !( ((row+1) % 4) || ((col+1) % 4) ) ) {
                 // that is, on row 3, 7, 11, etc
                 // after col 3, 7, 11, etc inclusive
                 
-                // 1. Roll back and work on sum.
-                int sum = tmp[row-3][col-3] + tmp[row-3][col-2] + tmp[row-3][col-1] + tmp[row-3][col];
+                // 1. Work on sum.
+                sum = tmp[row-3][col-3] + tmp[row-3][col-2] + tmp[row-3][col-1] + tmp[row-3][col];
                 sum += tmp[row-2][col-3] + tmp[row-2][col-2] + tmp[row-2][col-1] + tmp[row-2][col];
                 sum += tmp[row-1][col-3] + tmp[row-1][col-2] + tmp[row-1][col-1] + tmp[row-1][col];
                 sum += tmp[row][col-3] + tmp[row][col-2] + tmp[row][col-1] + tmp[row][col];
-                //calculate sume of Y
                 if (sum < 16)
                     lesstemp[row/4][col/4] = 0;
                 else {
-                    CGFloat sumY = tmpY[row-3][col-3] + tmpY[row-3][col-2] + tmpY[row-3][col-1] + tmpY[row-3][col];
+                    sumY = tmpY[row-3][col-3] + tmpY[row-3][col-2] + tmpY[row-3][col-1] + tmpY[row-3][col];
                     sumY += tmpY[row-2][col-3] + tmpY[row-2][col-2] + tmpY[row-2][col-1] + tmpY[row-2][col];
                     sumY += tmpY[row-1][col-3] + tmpY[row-1][col-2] + tmpY[row-1][col-1] + tmpY[row-1][col];
                     sumY += tmpY[row][col-3] + tmpY[row][col-2] + tmpY[row][col-1] + tmpY[row][col];
                     sumY = sumY * 0.0625f;
-                    CGFloat devSumY = (tmpY[row-3][col-3] - sumY) * (tmpY[row-3][col-3] - sumY);
-                    devSumY += (tmpY[row-3][col-2] - sumY) * (tmpY[row-3][col-2] - sumY);
-                    devSumY += (tmpY[row-3][col-1] - sumY) * (tmpY[row-3][col-1] - sumY);
-                    devSumY += (tmpY[row-3][col-0] - sumY) * (tmpY[row-3][col-0] - sumY);
+                    devSumY = fabsf(tmpY[row-3][col-3] - sumY)+fabsf(tmpY[row-3][col-2] - sumY);
+                    devSumY += fabsf(tmpY[row-3][col-1] - sumY) + fabsf(tmpY[row-3][col-0] - sumY);
                     
-                    devSumY += (tmpY[row-2][col-3] - sumY) * (tmpY[row-2][col-3] - sumY);
-                    devSumY += (tmpY[row-2][col-2] - sumY) * (tmpY[row-2][col-2] - sumY);
-                    devSumY += (tmpY[row-2][col-1] - sumY) * (tmpY[row-2][col-1] - sumY);
-                    devSumY += (tmpY[row-2][col-0] - sumY) * (tmpY[row-2][col-0] - sumY);
+                    devSumY += fabsf(tmpY[row-2][col-3] - sumY);
+                    devSumY += fabsf(tmpY[row-2][col-2] - sumY);
+                    devSumY += fabsf(tmpY[row-2][col-1] - sumY);
+                    devSumY += fabsf(tmpY[row-2][col-0] - sumY);
                     
-                    devSumY += (tmpY[row-1][col-3] - sumY) * (tmpY[row-1][col-3] - sumY);
-                    devSumY += (tmpY[row-1][col-2] - sumY) * (tmpY[row-1][col-2] - sumY);
-                    devSumY += (tmpY[row-1][col-1] - sumY) * (tmpY[row-1][col-1] - sumY);
-                    devSumY += (tmpY[row-1][col-0] - sumY) * (tmpY[row-1][col-0] - sumY);
+                    devSumY += fabsf(tmpY[row-1][col-3] - sumY);
+                    devSumY += fabsf(tmpY[row-1][col-2] - sumY);
+                    devSumY += fabsf(tmpY[row-1][col-1] - sumY);
+                    devSumY += fabsf(tmpY[row-1][col-0] - sumY);
                     
-                    devSumY += (tmpY[row][col-3] - sumY) * (tmpY[row][col-3] - sumY);
-                    devSumY += (tmpY[row][col-2] - sumY) * (tmpY[row][col-2] - sumY);
-                    devSumY += (tmpY[row][col-1] - sumY) * (tmpY[row][col-1] - sumY);
-                    devSumY += (tmpY[row][col-0] - sumY) * (tmpY[row][col-0] - sumY);
+                    devSumY += fabsf(tmpY[row][col-3] - sumY);
+                    devSumY += fabsf(tmpY[row][col-2] - sumY);
+                    devSumY += fabsf(tmpY[row][col-1] - sumY);
+                    devSumY += fabsf(tmpY[row][col-0] - sumY);
                     if (devSumY < 64.0f)
                         // The skin area should be:
                         // a. Step 2: sum of the 4 by 4 block equal to 16;
@@ -582,7 +587,7 @@
     for (int row = 0; row < inBuffer.height; row++) {
         for (int col = 0; col < inBuffer.width; col++) {
             // Step 1. Chrominance threshold, large bitmap
-            [self step1_pixelFromRGBtoYCbCr:pixel row:row column:col];
+            [self step1_pixelFromRGBtoYCbCr];
 //			[self step1_pixelFromRGB:pixel row:row column:col];
 			// Step 2. Set low res bitmap
             
@@ -707,6 +712,7 @@
         NSLog(@"pixelBuffer creation error %d", myBufferCreation);
     }
     [self step1_YCbCrThresholding:yuvBufferRef];
+    [self step1_pixelFromRGBtoYCbCr];
     [self step2_densityRegularization];
     // Render loop
     CGFloat hr_sim = 40.0f * sinf(currentTime * 6.28f * [self heartRate] / 60.0f);
@@ -772,6 +778,7 @@
                 [self fillInArray:CMSampleBufferGetImageBuffer(sampleBuffer)];
             }
             ++frame_number;
+            _percentComplete = ((float)RED_INDEX) / ((float)NUM_OF_RED_AVERAGE);
 		}
         else {
             if (!isUsingFrontCamera) {

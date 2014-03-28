@@ -3,10 +3,12 @@
 #import <CoreMedia/CMBufferQueue.h>
 #define MAX_NUM_FRAMES 360
 #define NUM_OF_RED_AVERAGE 300
+
 #define RECORDING_STAGE1 10
-#define RECORDING_STAGE2 40
-#define RED_INDEX frame_number-RECORDING_STAGE2
-#define RECORDING_STAGE3 340
+#define RECORDING_STAGE2 60
+#define RED_INDEX frame_number - RECORDING_STAGE2
+#define RECORDING_STAGE3 360
+
 #define NORMALIZED_WIDTH 352
 #define NORMALIZED_HEIGHT 288
 
@@ -76,7 +78,7 @@
 @property (readwrite, assign) id <RosyWriterVideoProcessorDelegate> delegate;
 
 @property (readonly) Float64 videoFrameRate;
-@property (nonatomic, readonly) CGFloat heartRate;
+@property (nonatomic, readonly) float heartRate, percentComplete;
 @property (readonly) CMVideoDimensions videoDimensions;
 @property (readonly) CMVideoCodecType videoType;
 

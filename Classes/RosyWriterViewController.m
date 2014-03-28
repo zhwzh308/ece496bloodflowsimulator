@@ -31,7 +31,12 @@ static inline double radians (double degrees) { return degrees * (M_PI / 180); }
             dimensionsString = [NSString stringWithFormat:@"%.0f BPM ", [videoProcessor heartRate]];
         }
         else {
-            frameRateString = [NSString stringWithFormat:@"Detecting heart rate"];
+            float result = [videoProcessor percentComplete] *100.0f;
+            if (result >= 0.0f) {
+                frameRateString = [NSString stringWithFormat:@"Detecting %.0f%%", result];
+            } else {
+                frameRateString = [NSString stringWithFormat:@"Warming up..."];
+            }
             dimensionsString = [NSString stringWithFormat:@"Lightly press the back camera."];
         }
         
@@ -45,7 +50,7 @@ static inline double radians (double degrees) { return degrees * (M_PI / 180); }
         if ([videoProcessor videoFrameRate] >= 20.0f) {
             [frameRateLabel setBackgroundColor:[UIColor colorWithRed:0.0 green:0.0 blue:1.0 alpha:0.25]];
         } else {
-            [frameRateLabel setBackgroundColor:[UIColor colorWithRed:1.0 green:0.0 blue:0.0 alpha:0.25]];
+            [frameRateLabel setBackgroundColor:[UIColor colorWithRed:1.0 green:0.0 blue:0.0 alpha:(0.25 + 0.75*[videoProcessor percentComplete])]];
         }
  		
  	}
@@ -133,7 +138,7 @@ static inline double radians (double degrees) { return degrees * (M_PI / 180); }
     oglView.center = CGPointMake(previewView.bounds.size.width/2.0, previewView.bounds.size.height/2.0);
  	
  	// Set up labels, usse NO to turn this function off.
-	shouldShowStats = NO;
+	shouldShowStats = YES;
 	// Where to display these labels.
 	frameRateLabel = [self labelWithText:@"" yPosition: (CGFloat) 30.0];
 	[previewView addSubview:frameRateLabel];
@@ -177,7 +182,7 @@ static inline double radians (double degrees) { return degrees * (M_PI / 180); }
 {
 	[super viewWillAppear:animated];
 
-	timer = [NSTimer scheduledTimerWithTimeInterval:0.25 target:self selector:@selector(updateLabels) userInfo:nil repeats:YES];
+	timer = [NSTimer scheduledTimerWithTimeInterval:0.05 target:self selector:@selector(updateLabels) userInfo:nil repeats:YES];
 }
 
 - (void)viewDidDisappear:(BOOL)animated
