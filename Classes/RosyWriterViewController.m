@@ -24,22 +24,30 @@ static inline double radians (double degrees) { return degrees * (M_PI / 180); }
 {
 	if (shouldShowStats) {
         // Get framerate from videoProcessor
-		NSString *frameRateString = [NSString stringWithFormat:@"%.2f FPS ", [videoProcessor videoFrameRate]];
+        NSString *frameRateString = nil;
+		NSString *dimensionsString = nil;
+        if ([videoProcessor heartRate]) {
+            frameRateString = [NSString stringWithFormat:@"%.2f FPS ", [videoProcessor videoFrameRate]];
+            dimensionsString = [NSString stringWithFormat:@"%.0f BPM ", [videoProcessor heartRate]];
+        }
+        else {
+            frameRateString = [NSString stringWithFormat:@"Detecting heart rate"];
+            dimensionsString = [NSString stringWithFormat:@"Lightly press the back camera."];
+        }
+        
  		frameRateLabel.text = frameRateString;
-        // Label background color
- 		[frameRateLabel setBackgroundColor:[UIColor colorWithRed:1.0 green:0.0 blue:0.0 alpha:0.25]];
- 		// Get dimension from videoProcessor
- 		//NSString *dimensionsString = [NSString stringWithFormat:@"%d x %d ", [videoProcessor videoDimensions].width, [videoProcessor videoDimensions].height];
-		NSString *dimensionsString = [NSString stringWithFormat:@"%.2f BPM ", [videoProcessor heartRate]];
  		dimensionsLabel.text = dimensionsString;
-		
- 		[dimensionsLabel setBackgroundColor:[UIColor colorWithRed:0.0 green:1.0 blue:0.0 alpha:0.25]];
+        if ([videoProcessor heartRate]) {
+            [dimensionsLabel setBackgroundColor:[UIColor colorWithRed:0.0 green:1.0 blue:0.0 alpha:0.25]];
+        } else {
+            [dimensionsLabel setBackgroundColor:[UIColor colorWithRed:1.0 green:0.0 blue:0.0 alpha:0.25]];
+        }
+        if ([videoProcessor videoFrameRate] >= 20.0f) {
+            [frameRateLabel setBackgroundColor:[UIColor colorWithRed:0.0 green:0.0 blue:1.0 alpha:0.25]];
+        } else {
+            [frameRateLabel setBackgroundColor:[UIColor colorWithRed:1.0 green:0.0 blue:0.0 alpha:0.25]];
+        }
  		
- 		CMVideoCodecType type = [videoProcessor videoType];
- 		type = OSSwapHostToBigInt32( type );
- 		NSString *typeString = [NSString stringWithFormat:@"%.4s ", (char*)&type];
- 		typeLabel.text = typeString;
- 		[typeLabel setBackgroundColor:[UIColor colorWithRed:0.0 green:0.0 blue:1.0 alpha:0.25]];
  	}
  	else {
  		frameRateLabel.text = @"";
@@ -47,21 +55,19 @@ static inline double radians (double degrees) { return degrees * (M_PI / 180); }
  		
  		dimensionsLabel.text = @"";
  		[dimensionsLabel setBackgroundColor:[UIColor clearColor]];
- 		
- 		typeLabel.text = @"";
- 		[typeLabel setBackgroundColor:[UIColor clearColor]];
  	}
 }
 
 - (UILabel *)labelWithText:(NSString *)text yPosition:(CGFloat)yPosition
 {
     // Bound the label, 200x40
-	CGFloat labelWidth = 200.0;
-	CGFloat labelHeight = 40.0;
+	CGFloat labelWidth = 240.0;
+	CGFloat labelHeight = 30.0;
 	CGFloat xPosition = previewView.bounds.size.width - labelWidth - 10;
 	CGRect labelFrame = CGRectMake(xPosition, yPosition, labelWidth, labelHeight);
 	UILabel *label = [[UILabel alloc] initWithFrame:labelFrame];
-	[label setFont:[UIFont systemFontOfSize:36]];
+    // 36 originally.
+	[label setFont:[UIFont systemFontOfSize:18]];
 	[label setLineBreakMode:NSLineBreakByWordWrapping];
 	[label setTextAlignment:NSTextAlignmentRight];
 	[label setTextColor:[UIColor whiteColor]];
@@ -129,14 +135,14 @@ static inline double radians (double degrees) { return degrees * (M_PI / 180); }
  	// Set up labels, usse NO to turn this function off.
 	shouldShowStats = NO;
 	// Where to display these labels.
-	frameRateLabel = [self labelWithText:@"" yPosition: (CGFloat) 10.0];
+	frameRateLabel = [self labelWithText:@"" yPosition: (CGFloat) 30.0];
 	[previewView addSubview:frameRateLabel];
 	
-	dimensionsLabel = [self labelWithText:@"" yPosition: (CGFloat) 54.0];
+	dimensionsLabel = [self labelWithText:@"" yPosition: (CGFloat) 75.0];
 	[previewView addSubview:dimensionsLabel];
 	
-	typeLabel = [self labelWithText:@"" yPosition: (CGFloat) 98.0];
-	[previewView addSubview:typeLabel];
+	//typeLabel = [self labelWithText:@"" yPosition: (CGFloat) 98.0];
+	//[previewView addSubview:typeLabel];
 }
 
 - (void)cleanup
@@ -146,7 +152,7 @@ static inline double radians (double degrees) { return degrees * (M_PI / 180); }
     
     frameRateLabel = nil;
     dimensionsLabel = nil;
-    typeLabel = nil;
+    //typeLabel = nil;
 	
     NSNotificationCenter *notificationCenter = [NSNotificationCenter defaultCenter];
 	[notificationCenter removeObserver:self name:UIDeviceOrientationDidChangeNotification object:nil];
