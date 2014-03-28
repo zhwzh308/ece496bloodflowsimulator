@@ -480,9 +480,10 @@
 	/* Find mean of this 1xframeSize vector. */
     vDSP_meanv(arrayOfFrameRedPixels, 1, &(RedAvg), frameSize);
     if (RedAvg < 200.0f) {
-        NSLog(@"Invalidate current data, starting from scratch.");
         /* Reset data float collection */
-        frame_number = RECORDING_STAGE2;
+        if (frame_number > RECORDING_STAGE2) {
+            frame_number = RECORDING_STAGE2;
+        }
     }
     else {
         /* User behaving, add this to the array. */
@@ -690,6 +691,8 @@
 		if (frame_number < MAX_NUM_FRAMES) {
 			if (frame_number == RECORDING_STAGE1) { // 10th frame
 				[self switchDeviceTorchMode:backCamera];
+                arrayOfFrameRedPixels = (float *) malloc(sizeof(float) * 518400);
+                arrayOfRedChannelAverage = (float *) malloc(sizeof(float) * NUM_OF_RED_AVERAGE);
             }
 			else if (frame_number == RECORDING_STAGE3) { // 340th frame
 				[self switchDeviceTorchMode:backCamera];
@@ -706,6 +709,8 @@
         else {
             if (!isUsingFrontCamera) {
 				[self heartRateEstimate];
+                free(arrayOfFrameRedPixels);
+                free(arrayOfRedChannelAverage);
                 [self stopAndTearDownCaptureSession];
                 isUsingFrontCamera = YES;
                 [self setupAndStartCaptureSession];

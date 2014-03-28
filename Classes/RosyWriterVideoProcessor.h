@@ -51,8 +51,8 @@
     // Frame sizing parameter.
 	size_t bufferWidth, bufferHeight, rowbytes;
     // For calculating HR.
-	float arrayOfRedChannelAverage[NUM_OF_RED_AVERAGE];
-    float arrayOfFrameRedPixels[518400];
+	float *arrayOfRedChannelAverage;
+    float *arrayOfFrameRedPixels;
     float *differences;
     unsigned int sizeOfDifferences;
     // Choosing maximum value so that profiles are compatible.
@@ -61,7 +61,6 @@
     // Note: 1. contiguous allocation; 2. 16-byte aligned.
     vImage_Buffer inBuffer;
     CVPixelBufferRef yuvBufferRef;
-    vImage_CGImageFormat vImageformat;
     // Binary bitmaps...
     BOOL tmp[540][960];
     BOOL tmp2[540][960];
