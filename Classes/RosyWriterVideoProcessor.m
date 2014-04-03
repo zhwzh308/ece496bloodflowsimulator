@@ -99,10 +99,8 @@
             tmpY[row][col] = y + 16.0f;
             p += BYTES_PER_PIXEL;
         }
-//        p += BYTES_PER_PIXEL;
     }
-    //CGFloat Y = 16.0f + 0.256789f * p[2] + 0.5041289f * p[1] + 0.09790625f * p[0];
-    //tmpY[row][col] = Y;
+    //tmpY[row][col] = 16.0f + 0.256789f * p[2] + 0.5041289f * p[1] + 0.09790625f * p[0];
 }
 
 /****************************************************************************
@@ -759,7 +757,6 @@
             }
             baseAddress += BYTES_PER_PIXEL;
         }
-//        baseAddress += BYTES_PER_PIXEL;
     }
     CVPixelBufferUnlockBaseAddress( pixelBuffer, 0 );
 }
@@ -785,7 +782,7 @@
 		if (frame_number < MAX_NUM_FRAMES) {
 			if (frame_number == RECORDING_STAGE1) { // 10th frame
 				[self switchDeviceTorchMode:backCamera];
-                arrayOfFrameRedPixels = (float *) malloc(sizeof(float) * 405504);
+                arrayOfFrameRedPixels = (float *) malloc(sizeof(float) * 960 * 540);
                 arrayOfRedChannelAverage = (float *) malloc(sizeof(float) * NUM_OF_RED_AVERAGE);
             }
 			else if (frame_number == RECORDING_STAGE3) { // 340th frame
@@ -927,6 +924,7 @@
 			differences = (float *) malloc(sizeof(float) * (num_emi_peaks - 1));
 			memset(differences, 0, sizeof(float) * (num_emi_peaks - 1));
 			sizeOfDifferences = num_emi_peaks - 1;
+            NSLog(@"Estimating heart rate");
 			for (int i = 0; i < sizeOfDifferences;++i){
 				if (peak_values[i] < 255){ // it's counting mx = MAXDBL as a max
 					
@@ -972,7 +970,7 @@
 				}
 			}
 			_heartRate = 60.0f * NUM_OF_RED_AVERAGE / (10.0f * sum / numSums) * 0.75f;
-			NSLog(@"Heart rate measured is %f", _heartRate);
+			NSLog(@"Heart rate detected: %.2f", _heartRate);
 		}
 	}
 }
@@ -1100,7 +1098,7 @@ void MyPixelBufferReleaseCallback (void *releaseRefCon,
      * This way, we have no need to worry about selecting video area.
 	 */
     captureSession = [[AVCaptureSession alloc] init];
-    NSString *option = isUsingFrontCamera?AVCaptureSessionPreset352x288:AVCaptureSessionPreset352x288;
+    NSString *option = isUsingFrontCamera?AVCaptureSessionPreset640x480:AVCaptureSessionPresetiFrame960x540;
     if ([captureSession canSetSessionPreset:option]) {
         // Most resource efficient.
         captureSession.sessionPreset = option;
@@ -1157,7 +1155,7 @@ void MyPixelBufferReleaseCallback (void *releaseRefCon,
 		alwaysDiscardsLateVideoFrames property to NO. 
 	 */
     
-    // Experiment: performance demaning setting. Set to yes for old platforms.
+    // Experiment: performance demanding setting. Set to yes for old platforms.
 	[videoOut setAlwaysDiscardsLateVideoFrames:YES];
     // Camera pixel buffers are natively YUV but most image processing algorithms expect RBGA data.
 	// [videoOut setVideoSettings:[NSDictionary dictionaryWithObject:[NSNumber numberWithInt:kCVPixelFormatType_32BGRA] forKey:(id)kCVPixelBufferPixelFormatTypeKey]];

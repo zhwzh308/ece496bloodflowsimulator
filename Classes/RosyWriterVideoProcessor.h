@@ -9,8 +9,8 @@
 #define RED_INDEX frame_number - RECORDING_STAGE2
 #define RECORDING_STAGE3 360
 
-#define NORMALIZED_WIDTH 352
-#define NORMALIZED_HEIGHT 288
+#define NORMALIZED_WIDTH 640
+#define NORMALIZED_HEIGHT 480
 
 @protocol RosyWriterVideoProcessorDelegate;
 
