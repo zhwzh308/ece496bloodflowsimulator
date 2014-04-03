@@ -79,13 +79,24 @@
 
 - (void) step1_pixelFromRGBtoYCbCr
 {
-    float cb, cr;//, y;
-    unsigned char * p = inBuffer.data;
+    float cb, cr, y;
+    // BGR ordered.
+    float vec_y[3] = {0.0979f, 0.5041f, 0.2568f};
+    float vec_cb[3] = {0.4392f, -0.2910f, -0.1482f};
+    float vec_cr[3] = {-0.0714f, -0.3678f, 0.4392f};
+    float computeTemp[3];
+    unsigned char *p = inBuffer.data;
     for (int row = 0; row < inBuffer.height; ++row) {
         for (int col = 0; col < inBuffer.width; ++col) {
-            cb = 128.0f - 0.14822656f * p[2] - 0.290992188f * p[1] + 0.4392148f * p[0];
-            cr = 128.0f + 0.4392148f * p[2] - (0.367789f * p[1]) - (0.07142578f * p[0]);
-            tmp[row][col] = (cb >= 77.0f && cb <= 127.0f && cr >= 133.0f && cr <= 173.0f);
+            vDSP_vfltu8(p, 1, computeTemp, 1, 3);
+            vDSP_dotpr(computeTemp, 1, vec_y, 1, &y, 3);
+            vDSP_dotpr(computeTemp, 1, vec_cb, 1, &cb, 3);
+            vDSP_dotpr(computeTemp, 1, vec_cr, 1, &cr, 3);
+            //cb = 128.0f - 0.14822656f * p[2] - 0.290992188f * p[1] + 0.4392148f * p[0];
+            //cr = 128.0f + 0.4392148f * p[2] - (0.367789f * p[1]) - (0.07142578f * p[0]);
+            //tmp[row][col] = (cb >= 77.0f && cb <= 127.0f && cr >= 133.0f && cr <= 173.0f);
+            tmp[row][col] = (cb >= -51.0f && cb <= -1.0f) && (cr >= 5.0f && cr <= 45.0f);
+            tmpY[row][col] = y + 16.0f;
             p += BYTES_PER_PIXEL;
         }
         p += BYTES_PER_PIXEL;
@@ -94,20 +105,40 @@
     //tmpY[row][col] = Y;
 }
 
-- (void) step1_YCbCrThresholding:(CVPixelBufferRef)yCbCrPixel
+/****************************************************************************
+ * Store threshold result by from Cb [77,127], Cr [133,173]; store luma val *
+ * Y´ = floor(0.5 + 219 * EY´ +  16)    Y´ = [16,235] as EY´ = [0,1]        *
+ * Cb = floor(0.5 + 224 * ECb + 128)    Cb = [16,240] as ECb = [-0.5, +0.5] *
+ * Cr = floor(0.5 + 224 * ECr + 128)    Cr = [16,240] as ECr = [-0.5, +0.5] *
+ * v308: Byte 0 Byte 1 Byte 2 8-bit Cr 8-bit Y´ 8-bit Cb                    *
+ * v408: Byte 0 8-bit Cb Byte 1 8-bit Y´ Byte 2 8-bit Cr Byte 3 8-bit A     *
+ ****************************************************************************/
+
+- (void) step1_YCbCrThresholding
 {
-	CVPixelBufferLockBaseAddress( yCbCrPixel, kCVPixelBufferLock_ReadOnly );
-    unsigned char *pixel = CVPixelBufferGetBaseAddress(yCbCrPixel);
-    for (int i = 0; i < inBuffer.height; ++i) {
-        vDSP_vfltu8(pixel+1, BYTES_PER_PIXEL, tmpY[i], 1, inBuffer.width);
-        //for (int j = 0; j < inBuffer.width; ++j) {
-            //tmp[i][j]=(pixel[2] >= 77 && pixel[2] <= 127 && pixel[0] >= 133 && pixel[0] <= 173);
-            //tmp[i][j] = (*pixel >= 77 && *pixel <= 127 && pixel[2] >= 133 && pixel[2] <= 173);
-            //pixel += BYTES_PER_PIXEL;
-        //}
-        pixel += BYTES_PER_PIXEL * inBuffer.width;
+    CVReturn myBufferCreation = CVPixelBufferCreateWithBytes(NULL, inBuffer.width,
+                                                             inBuffer.height,
+                                                             //kComponentVideoCodecType
+                                                             kCVPixelFormatType_4444YpCbCrA8,
+                                                             inBuffer.data,
+                                                             inBuffer.rowBytes,
+                                                             NULL, NULL, NULL,
+                                                             &yuvBufferRef);
+    if (myBufferCreation) {
+        NSLog(@"pixelBuffer creation error %d", myBufferCreation);
     }
-	CVPixelBufferUnlockBaseAddress( yCbCrPixel, kCVPixelBufferLock_ReadOnly );
+	CVPixelBufferLockBaseAddress( yuvBufferRef, kCVPixelBufferLock_ReadOnly );
+    unsigned char *pixel = CVPixelBufferGetBaseAddress(yuvBufferRef);
+    for (int i = 0; i < inBuffer.height; ++i) {
+        vDSP_vfltu8(pixel + 1, BYTES_PER_PIXEL, tmpY[i], 1, inBuffer.width);
+        for (int j = 0; j < inBuffer.width; ++j) {
+            // tmp[i][j]=(pixel[2] >= 77 && pixel[2] <= 127 && pixel[0] >= 133 && pixel[0] <= 173);
+            tmp[i][j] = (*pixel >= 83 && *pixel <= 127 && pixel[2] >= 132 && pixel[2] <= 167);
+            pixel += BYTES_PER_PIXEL;
+        }
+        pixel += BYTES_PER_PIXEL;
+    }
+	CVPixelBufferUnlockBaseAddress( yuvBufferRef, kCVPixelBufferLock_ReadOnly );
 }
 
 - (void) step2_densityRegularization
@@ -700,18 +731,8 @@
     // vImageVerticalReflect_ARGB8888(&inBuffer, &inBuffer, kvImageNoFlags);
     
     // Vertical reflect is done on GPU
-    CVReturn myBufferCreation = CVPixelBufferCreateWithBytes(NULL, inBuffer.width,
-                                                             inBuffer.height,
-                                                             //kCVPixelFormatType_444YpCbCr8,
-                                                             kCVPixelFormatType_4444YpCbCrA8,
-                                                             baseAddress,
-                                                             inBuffer.rowBytes,
-                                                             NULL, NULL, NULL,
-                                                             &yuvBufferRef);
-    if (myBufferCreation) {
-        NSLog(@"pixelBuffer creation error %d", myBufferCreation);
-    }
-    [self step1_YCbCrThresholding:yuvBufferRef];
+    
+    //[self step1_YCbCrThresholding];
     [self step1_pixelFromRGBtoYCbCr];
     [self step2_densityRegularization];
     // Render loop

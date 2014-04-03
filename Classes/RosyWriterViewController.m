@@ -50,7 +50,7 @@ static inline double radians (double degrees) { return degrees * (M_PI / 180); }
         if ([videoProcessor videoFrameRate] >= 20.0f) {
             [frameRateLabel setBackgroundColor:[UIColor colorWithRed:0.0 green:0.0 blue:1.0 alpha:0.25]];
         } else {
-            [frameRateLabel setBackgroundColor:[UIColor colorWithRed:1.0 green:0.0 blue:0.0 alpha:(0.25 + 0.75*[videoProcessor percentComplete])]];
+            [frameRateLabel setBackgroundColor:[UIColor colorWithRed:1.0 green:0.0 blue:0.0 alpha:0.25]];
         }
  		
  	}
