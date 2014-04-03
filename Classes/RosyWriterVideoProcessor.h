@@ -68,7 +68,7 @@
     // Binary bitmaps...
     BOOL tmp[NORMALIZED_HEIGHT][NORMALIZED_WIDTH];
     BOOL tmp2[NORMALIZED_HEIGHT][NORMALIZED_WIDTH];
-    BOOL lesstemp[72][88];
+    BOOL lesstemp[NORMALIZED_HEIGHT/4][NORMALIZED_WIDTH/4];
     float tmpY[NORMALIZED_HEIGHT][NORMALIZED_WIDTH];
     
     BOOL isUsingFrontCamera, readyToRecordAudio, readyToRecordVideo, recordingWillBeStarted, recordingWillBeStopped;
