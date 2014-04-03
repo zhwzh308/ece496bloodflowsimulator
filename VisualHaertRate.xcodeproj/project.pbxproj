@@ -26,6 +26,14 @@
 		6698297518B98D44005CFFED /* intro2.PNG in Resources */ = {isa = PBXBuildFile; fileRef = 6698297418B98D44005CFFED /* intro2.PNG */; };
 		6698297718B98E86005CFFED /* background.PNG in Resources */ = {isa = PBXBuildFile; fileRef = 6698297618B98E86005CFFED /* background.PNG */; };
 		66F40E2418D2069D001B2C86 /* heart_rate_by_shorty6636-d33l3us1.jpeg in Resources */ = {isa = PBXBuildFile; fileRef = 66F40E2318D2069D001B2C86 /* heart_rate_by_shorty6636-d33l3us1.jpeg */; };
+		6FC804BA18E9D21400C9CEC5 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6FC804B918E9D21400C9CEC5 /* Images.xcassets */; };
+		6FC804C218EA5E2E00C9CEC5 /* icon29.png in Resources */ = {isa = PBXBuildFile; fileRef = 6FC804BB18EA5E2E00C9CEC5 /* icon29.png */; };
+		6FC804C318EA5E2E00C9CEC5 /* icon40.png in Resources */ = {isa = PBXBuildFile; fileRef = 6FC804BC18EA5E2E00C9CEC5 /* icon40.png */; };
+		6FC804C418EA5E2E00C9CEC5 /* icon58.png in Resources */ = {isa = PBXBuildFile; fileRef = 6FC804BD18EA5E2E00C9CEC5 /* icon58.png */; };
+		6FC804C518EA5E2E00C9CEC5 /* icon76.png in Resources */ = {isa = PBXBuildFile; fileRef = 6FC804BE18EA5E2E00C9CEC5 /* icon76.png */; };
+		6FC804C618EA5E2E00C9CEC5 /* icon80.png in Resources */ = {isa = PBXBuildFile; fileRef = 6FC804BF18EA5E2E00C9CEC5 /* icon80.png */; };
+		6FC804C718EA5E2E00C9CEC5 /* icon120.png in Resources */ = {isa = PBXBuildFile; fileRef = 6FC804C018EA5E2E00C9CEC5 /* icon120.png */; };
+		6FC804C818EA5E2E00C9CEC5 /* icon152.png in Resources */ = {isa = PBXBuildFile; fileRef = 6FC804C118EA5E2E00C9CEC5 /* icon152.png */; };
 		AF2A5C021434ED1F007EF597 /* MainWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = AF2A5BFE1434ED1F007EF597 /* MainWindow.xib */; };
 		AF2A5C031434ED1F007EF597 /* RosyWriterViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = AF2A5C001434ED1F007EF597 /* RosyWriterViewController.xib */; };
 		AF928C10140C2AD300844BAD /* ShaderUtilities.c in Sources */ = {isa = PBXBuildFile; fileRef = AF928C0E140C2AD300844BAD /* ShaderUtilities.c */; };
@@ -42,7 +50,7 @@
 		1D30AB110D05D00D00671497 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		1D3623240D0F684500981E51 /* RosyWriterAppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RosyWriterAppDelegate.h; path = Classes/RosyWriterAppDelegate.h; sourceTree = "<group>"; };
 		1D3623250D0F684500981E51 /* RosyWriterAppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RosyWriterAppDelegate.m; path = Classes/RosyWriterAppDelegate.m; sourceTree = "<group>"; };
-		1D6058910D05DD3D006BFB54 /* RosyWriter.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RosyWriter.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		1D6058910D05DD3D006BFB54 /* VisualHaertRate.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VisualHaertRate.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1DF5F4DF0D08C38300B7A737 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		26545D0712E6ACE0004BB151 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
 		26545D0912E6ACE0004BB151 /* CoreMedia.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMedia.framework; path = System/Library/Frameworks/CoreMedia.framework; sourceTree = SDKROOT; };
@@ -57,13 +65,21 @@
 		289233A80DB2D0DB0083E9F9 /* RosyWriterViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RosyWriterViewController.h; path = Classes/RosyWriterViewController.h; sourceTree = "<group>"; };
 		289233A90DB2D0DB0083E9F9 /* RosyWriterViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RosyWriterViewController.m; path = Classes/RosyWriterViewController.m; sourceTree = "<group>"; };
 		29B97316FDCFA39411CA2CEA /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
-		32CA4F630368D1EE00C91783 /* RosyWriter_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RosyWriter_Prefix.pch; sourceTree = "<group>"; };
+		32CA4F630368D1EE00C91783 /* VisualHaertRate_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VisualHaertRate_Prefix.pch; sourceTree = "<group>"; };
 		66925A3818B8026300162813 /* heartrate.jpeg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = heartrate.jpeg; sourceTree = "<group>"; };
 		6698297018B9877F005CFFED /* intro.PNG */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = intro.PNG; sourceTree = "<group>"; };
 		6698297418B98D44005CFFED /* intro2.PNG */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = intro2.PNG; sourceTree = "<group>"; };
 		6698297618B98E86005CFFED /* background.PNG */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = background.PNG; sourceTree = "<group>"; };
 		66F40E2318D2069D001B2C86 /* heart_rate_by_shorty6636-d33l3us1.jpeg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "heart_rate_by_shorty6636-d33l3us1.jpeg"; sourceTree = "<group>"; };
-		8D1107310486CEB800E47090 /* RosyWriter-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "RosyWriter-Info.plist"; plistStructureDefinitionIdentifier = "com.apple.xcode.plist.structure-definition.iphone.info-plist"; sourceTree = "<group>"; };
+		6FC804B918E9D21400C9CEC5 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = RosyWriter/Images.xcassets; sourceTree = "<group>"; };
+		6FC804BB18EA5E2E00C9CEC5 /* icon29.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon29.png; sourceTree = "<group>"; };
+		6FC804BC18EA5E2E00C9CEC5 /* icon40.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon40.png; sourceTree = "<group>"; };
+		6FC804BD18EA5E2E00C9CEC5 /* icon58.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon58.png; sourceTree = "<group>"; };
+		6FC804BE18EA5E2E00C9CEC5 /* icon76.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon76.png; sourceTree = "<group>"; };
+		6FC804BF18EA5E2E00C9CEC5 /* icon80.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon80.png; sourceTree = "<group>"; };
+		6FC804C018EA5E2E00C9CEC5 /* icon120.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon120.png; sourceTree = "<group>"; };
+		6FC804C118EA5E2E00C9CEC5 /* icon152.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon152.png; sourceTree = "<group>"; };
+		8D1107310486CEB800E47090 /* VisualHaertRate-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "VisualHaertRate-Info.plist"; plistStructureDefinitionIdentifier = "com.apple.xcode.plist.structure-definition.iphone.info-plist"; sourceTree = "<group>"; };
 		AF2A5BFF1434ED1F007EF597 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/MainWindow.xib; sourceTree = "<group>"; };
 		AF2A5C011434ED1F007EF597 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/RosyWriterViewController.xib; sourceTree = "<group>"; };
 		AF928C0E140C2AD300844BAD /* ShaderUtilities.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = ShaderUtilities.c; path = Classes/ShaderUtilities.c; sourceTree = "<group>"; };
@@ -109,7 +125,7 @@
 		19C28FACFE9D520D11CA2CBB /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				1D6058910D05DD3D006BFB54 /* RosyWriter.app */,
+				1D6058910D05DD3D006BFB54 /* VisualHaertRate.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -117,6 +133,13 @@
 		29B97314FDCFA39411CA2CEA /* CustomTemplate */ = {
 			isa = PBXGroup;
 			children = (
+				6FC804BB18EA5E2E00C9CEC5 /* icon29.png */,
+				6FC804BC18EA5E2E00C9CEC5 /* icon40.png */,
+				6FC804BD18EA5E2E00C9CEC5 /* icon58.png */,
+				6FC804BE18EA5E2E00C9CEC5 /* icon76.png */,
+				6FC804BF18EA5E2E00C9CEC5 /* icon80.png */,
+				6FC804C018EA5E2E00C9CEC5 /* icon120.png */,
+				6FC804C118EA5E2E00C9CEC5 /* icon152.png */,
 				EF4460B7183445CE00B5FEE3 /* Icon@2x~ipad.png */,
 				EF4460B51834458B00B5FEE3 /* Icon~iphone.png */,
 				EF4460B41834451800B5FEE3 /* Icon@2x.png */,
@@ -140,7 +163,7 @@
 			children = (
 				AF928C0E140C2AD300844BAD /* ShaderUtilities.c */,
 				AF928C0F140C2AD300844BAD /* ShaderUtilities.h */,
-				32CA4F630368D1EE00C91783 /* RosyWriter_Prefix.pch */,
+				32CA4F630368D1EE00C91783 /* VisualHaertRate_Prefix.pch */,
 				29B97316FDCFA39411CA2CEA /* main.m */,
 			);
 			name = "Other Sources";
@@ -149,10 +172,11 @@
 		29B97317FDCFA39411CA2CEA /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				6FC804B918E9D21400C9CEC5 /* Images.xcassets */,
 				EF997CEC187A030B004E4FD2 /* Main.storyboard */,
 				AF2A5BFE1434ED1F007EF597 /* MainWindow.xib */,
 				AF2A5C001434ED1F007EF597 /* RosyWriterViewController.xib */,
-				8D1107310486CEB800E47090 /* RosyWriter-Info.plist */,
+				8D1107310486CEB800E47090 /* VisualHaertRate-Info.plist */,
 			);
 			name = Resources;
 			sourceTree = "<group>";
@@ -222,9 +246,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		1D6058900D05DD3D006BFB54 /* RosyWriter */ = {
+		1D6058900D05DD3D006BFB54 /* VisualHaertRate */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 1D6058960D05DD3E006BFB54 /* Build configuration list for PBXNativeTarget "RosyWriter" */;
+			buildConfigurationList = 1D6058960D05DD3E006BFB54 /* Build configuration list for PBXNativeTarget "VisualHaertRate" */;
 			buildPhases = (
 				1D60588D0D05DD3D006BFB54 /* Resources */,
 				1D60588E0D05DD3D006BFB54 /* Sources */,
@@ -234,9 +258,9 @@
 			);
 			dependencies = (
 			);
-			name = RosyWriter;
+			name = VisualHaertRate;
 			productName = MovieWriter;
-			productReference = 1D6058910D05DD3D006BFB54 /* RosyWriter.app */;
+			productReference = 1D6058910D05DD3D006BFB54 /* VisualHaertRate.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -252,7 +276,7 @@
 					};
 				};
 			};
-			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "RosyWriter" */;
+			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "VisualHaertRate" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 1;
@@ -267,7 +291,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				1D6058900D05DD3D006BFB54 /* RosyWriter */,
+				1D6058900D05DD3D006BFB54 /* VisualHaertRate */,
 			);
 		};
 /* End PBXProject section */
@@ -278,14 +302,22 @@
 			buildActionMask = 2147483647;
 			files = (
 				EF997CEE187A030B004E4FD2 /* Main.storyboard in Resources */,
+				6FC804C618EA5E2E00C9CEC5 /* icon80.png in Resources */,
 				6698297718B98E86005CFFED /* background.PNG in Resources */,
 				AFC35FDC13FEFC0A0043EAD6 /* passThrough.fsh in Resources */,
+				6FC804C518EA5E2E00C9CEC5 /* icon76.png in Resources */,
 				66925A3918B8026300162813 /* heartrate.jpeg in Resources */,
 				AFC35FDD13FEFC0A0043EAD6 /* passThrough.vsh in Resources */,
 				AF2A5C021434ED1F007EF597 /* MainWindow.xib in Resources */,
+				6FC804C818EA5E2E00C9CEC5 /* icon152.png in Resources */,
+				6FC804C718EA5E2E00C9CEC5 /* icon120.png in Resources */,
+				6FC804C318EA5E2E00C9CEC5 /* icon40.png in Resources */,
 				EF21958E1824169500782BEA /* Default-568h@2x.png in Resources */,
+				6FC804C218EA5E2E00C9CEC5 /* icon29.png in Resources */,
+				6FC804C418EA5E2E00C9CEC5 /* icon58.png in Resources */,
 				AF2A5C031434ED1F007EF597 /* RosyWriterViewController.xib in Resources */,
 				6698297118B9877F005CFFED /* intro.PNG in Resources */,
+				6FC804BA18E9D21400C9CEC5 /* Images.xcassets in Resources */,
 				6698297518B98D44005CFFED /* intro2.PNG in Resources */,
 				66F40E2418D2069D001B2C86 /* heart_rate_by_shorty6636-d33l3us1.jpeg in Resources */,
 			);
@@ -342,16 +374,15 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				COPY_PHASE_STRIP = NO;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = RosyWriter_Prefix.pch;
-				INFOPLIST_FILE = "RosyWriter-Info.plist";
+				GCC_PREFIX_HEADER = VisualHaertRate_Prefix.pch;
+				INFOPLIST_FILE = "VisualHaertRate-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
-				PRODUCT_NAME = RosyWriter;
+				PRODUCT_NAME = VisualHaertRate;
 				PROVISIONING_PROFILE = "";
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -362,14 +393,13 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				COPY_PHASE_STRIP = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = RosyWriter_Prefix.pch;
-				INFOPLIST_FILE = "RosyWriter-Info.plist";
+				GCC_PREFIX_HEADER = VisualHaertRate_Prefix.pch;
+				INFOPLIST_FILE = "VisualHaertRate-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
-				PRODUCT_NAME = RosyWriter;
+				PRODUCT_NAME = VisualHaertRate;
 				PROVISIONING_PROFILE = "";
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALIDATE_PRODUCT = YES;
@@ -413,7 +443,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		1D6058960D05DD3E006BFB54 /* Build configuration list for PBXNativeTarget "RosyWriter" */ = {
+		1D6058960D05DD3E006BFB54 /* Build configuration list for PBXNativeTarget "VisualHaertRate" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				1D6058940D05DD3E006BFB54 /* Debug */,
@@ -422,7 +452,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		C01FCF4E08A954540054247B /* Build configuration list for PBXProject "RosyWriter" */ = {
+		C01FCF4E08A954540054247B /* Build configuration list for PBXProject "VisualHaertRate" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C01FCF4F08A954540054247B /* Debug */,

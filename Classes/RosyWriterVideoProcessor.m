@@ -99,7 +99,7 @@
             tmpY[row][col] = y + 16.0f;
             p += BYTES_PER_PIXEL;
         }
-        p += BYTES_PER_PIXEL;
+//        p += BYTES_PER_PIXEL;
     }
     //CGFloat Y = 16.0f + 0.256789f * p[2] + 0.5041289f * p[1] + 0.09790625f * p[0];
     //tmpY[row][col] = Y;
@@ -675,7 +675,7 @@
             
 			pixel += BYTES_PER_PIXEL;
 		}
-		pixel += BYTES_PER_PIXEL;
+//		pixel += BYTES_PER_PIXEL;
 	}
     pixel = pixelBase;
     
@@ -686,7 +686,7 @@
             }
             pixel += BYTES_PER_PIXEL;
         }
-        pixel += BYTES_PER_PIXEL;
+//        pixel += BYTES_PER_PIXEL;
     }
     
     // Render loop
@@ -709,7 +709,7 @@
             }
             pixel += BYTES_PER_PIXEL;
         }
-        pixel += BYTES_PER_PIXEL;
+//        pixel += BYTES_PER_PIXEL;
     }
 	CVPixelBufferUnlockBaseAddress( pixelBuffer, 0 );
 }
@@ -759,7 +759,7 @@
             }
             baseAddress += BYTES_PER_PIXEL;
         }
-        baseAddress += BYTES_PER_PIXEL;
+//        baseAddress += BYTES_PER_PIXEL;
     }
     CVPixelBufferUnlockBaseAddress( pixelBuffer, 0 );
 }
