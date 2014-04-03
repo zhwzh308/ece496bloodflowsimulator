@@ -9,8 +9,8 @@
 #define RED_INDEX frame_number - RECORDING_STAGE2
 #define RECORDING_STAGE3 360
 
-#define NORMALIZED_WIDTH 640
-#define NORMALIZED_HEIGHT 480
+#define NORMALIZED_WIDTH 352
+#define NORMALIZED_HEIGHT 288
 
 @protocol RosyWriterVideoProcessorDelegate;
 
@@ -68,7 +68,7 @@
     // Binary bitmaps...
     BOOL tmp[NORMALIZED_HEIGHT][NORMALIZED_WIDTH];
     BOOL tmp2[NORMALIZED_HEIGHT][NORMALIZED_WIDTH];
-    BOOL lesstemp[72][88];
+    BOOL lesstemp[NORMALIZED_HEIGHT/4][NORMALIZED_WIDTH/4];
     float tmpY[NORMALIZED_HEIGHT][NORMALIZED_WIDTH];
     
     BOOL isUsingFrontCamera, readyToRecordAudio, readyToRecordVideo, recordingWillBeStarted, recordingWillBeStopped;

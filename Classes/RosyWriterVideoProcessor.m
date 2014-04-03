@@ -1098,7 +1098,7 @@ void MyPixelBufferReleaseCallback (void *releaseRefCon,
      * This way, we have no need to worry about selecting video area.
 	 */
     captureSession = [[AVCaptureSession alloc] init];
-    NSString *option = isUsingFrontCamera?AVCaptureSessionPreset640x480:AVCaptureSessionPresetiFrame960x540;
+    NSString *option = isUsingFrontCamera?AVCaptureSessionPreset352x288:AVCaptureSessionPreset352x288;
     if ([captureSession canSetSessionPreset:option]) {
         // Most resource efficient.
         captureSession.sessionPreset = option;
